@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="dashboard-container">
+  <h1 class="dashboard-title">Dashboard</h1>
+
+  <div class="row gx-4 gy-4">
+    <div class="col-lg-4">
+      <div class="card action-card">
+        <div class="list-group list-group-flush">
+          <a href="{% url 'habits:form_new_habit' %}" class="list-group-item">Form a New Habit</a>
+          <a href="{% url 'habits:ongoing_habit' %}" class="list-group-item">Ongoing Habits</a>
+          <a href="{% url 'accounts:edit_personal_info' %}" class="list-group-item">Edit Personal Info</a>
+          <a href="{% url 'accounts:logout' %}" class="list-group-item logout-link">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card info-card">
+        <h3>Insights</h3>
+        <p>Monitor streaks, points, and progress. Charts coming soon!</p>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card info-card">
+        <h3>Habit News</h3>
+        <ul id="news-list" class="mb-0">
+          <li>Loading latest habit tips...</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+fetch('https://api.sampleapis.com/futurama/quotes')
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('news-list').innerHTML =
+      data.slice(0,3).map(q => `<li>• ${q.quote}</li>`).join('');
+  })
+  .catch(_ => document.getElementById('news-list').innerHTML = '<li>Unable to load news.</li>');
+</script>
+{% endblock %}

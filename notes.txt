@@ -1,0 +1,33 @@
+---------
+backend->
+docker-compose up --build
+docker-compose exec web python manage.py migrate
+
+-- optional
+docker-compose exec web python manage.py createsuperuser
+
+-----------
+accounts foulder ->
+docker-compose exec web python manage.py makemigrations accounts
+docker-compose exec web python manage.py migrate
+
+--------------
+habits ->
+docker-compose exec web python manage.py makemigrations habits
+docker-compose exec web python manage.py migrate
+
+----------
+MAIN ->
+docker-compose down -v
+docker-compose up --build
+
+docker-compose exec web python manage.py migrate
+
+-------------------
+Verify Demo‑Mode Notifications
+
+Watch Beat logs (every minute):
+docker-compose logs -f habit-celery-beat
+
+Watch Worker logs (task execution):
+docker-compose logs -f habit-celery-worker

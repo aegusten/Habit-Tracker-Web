@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="edit-info-container">
+  <h2 class="text-center mb-4">Edit Personal Info</h2>
+  <div class="card mx-auto info-card p-4">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.phone_number|as_crispy_field }}
+      {{ form.age|as_crispy_field }}
+      <div class="d-flex justify-content-between mt-4">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#passwordModal">Change Password</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="passwordModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-card p-4">
+      <form method="post" action="{% url 'accounts:change_password' %}">
+        {% csrf_token %}
+        {% if forgot %}
+          {% for question, answer in security_questions.items %}
+            <div class="mb-3">
+              <label class="form-label">{{ question }}</label>
+              <input type="text" name="{{ question }}" class="form-control" required>
+            </div>
+          {% endfor %}
+          <button type="submit" name="verify" class="btn btn-primary w-100">Verify Answers</button>
+        {% else %}
+          {{ password_form.old_password|as_crispy_field }}
+          <button type="button" id="showNew" class="btn btn-secondary w-100 mb-3">Next</button>
+          <div id="newSection" class="d-none">
+            {{ password_form.new_password1|as_crispy_field }}
+            <small class="form-text text-muted mb-3">
+              • At least 8 characters<br>
+              • Not entirely numeric<br>
+              • Avoid common words or personal info
+            </small>
+            {{ password_form.new_password2|as_crispy_field }}
+            <button type="submit" class="btn btn-success w-100">Update Password</button>
+          </div>
+          <div class="text-center mt-2">
+            <button type="submit" name="forgot" class="btn btn-link text-warning">Forgot old password?</button>
+          </div>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('showNew').onclick = () => {
+  document.getElementById('newSection').classList.remove('d-none');
+};
+</script>
+{% endblock %}

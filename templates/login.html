@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-5">
+    <h2 class="text-center mb-4">Login</h2>
+    <form method="post" action="{% url 'accounts:login' %}">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="mb-3">{{ form.username|as_crispy_field }}</div>
+      <div class="mb-3">{{ form.password|as_crispy_field }}</div>
+      <button type="submit" class="btn btn-primary w-100">Login</button>
+    </form>
+    <p class="text-center mt-3">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal">Need an account? Register here</a>
+    </p>
+  </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div class="modal fade" id="registerModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content rounded-4 shadow-sm">
+      <form method="post" action="{% url 'accounts:register' %}">
+        {% csrf_token %}
+        <div class="modal-header border-bottom-0">
+          <h5 class="modal-title mx-auto">Sign Up</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body px-5">
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">{{ register_form.id_number|as_crispy_field }}</div>
+            <div class="col-md-6">{{ register_form.full_name|as_crispy_field }}</div>
+            <div class="col-md-6">{{ register_form.phone_number|as_crispy_field }}</div>
+            <div class="col-md-6">{{ register_form.age|as_crispy_field }}</div>
+            <div class="col-md-6">{{ register_form.password1|as_crispy_field }}</div>
+            <div class="col-md-6">{{ register_form.password2|as_crispy_field }}</div>
+          </div>
+          <hr>
+          <div class="row mb-3 align-items-center">
+            <div class="col-5">
+              <select name="pet_name" class="form-select" required>
+                <option value="">Question 1 *</option>
+                <option>What was your first pet’s name?</option>
+                <option>What city were you born in?</option>
+                <option>What was your childhood nickname?</option>
+              </select>
+            </div>
+            <div class="col">
+              <input name="pet_name" type="text" class="form-control" placeholder="Answer" required>
+            </div>
+          </div>
+          <div class="row mb-3 align-items-center">
+            <div class="col-5">
+              <select name="first_love" class="form-select" required>
+                <option value="">Question 2 *</option>
+                <option>Who was your first love?</option>
+                <option>What is your mother’s maiden name?</option>
+                <option>What high school did you attend?</option>
+              </select>
+            </div>
+            <div class="col">
+              <input name="first_love" type="text" class="form-control" placeholder="Answer" required>
+            </div>
+          </div>
+          <div class="row mb-3 align-items-center">
+            <div class="col-5">
+              <select name="favorite_color" class="form-select">
+                <option value="">Question 3 (optional)</option>
+                <option>What is your favorite color?</option>
+                <option>What street did you grow up on?</option>
+                <option>What was your childhood phone number?</option>
+              </select>
+            </div>
+            <div class="col">
+              <input name="favorite_color" type="text" class="form-control" placeholder="Answer (optional)">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 px-5">
+          <button type="submit" class="btn btn-success w-100 rounded-pill">Register</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

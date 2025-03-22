@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">Ongoing Habits</h2>
+{% if habits %}
+  <div class="row row-cols-1 row-cols-md-2 g-3">
+    {% for habit in habits %}
+      <div class="col">
+        <div class="card border-primary">
+          <div class="card-body">
+            <h5 class="card-title">{{ habit.name }}</h5>
+            <p class="card-text">
+              Created: {{ habit.created_at|date:"Y-m-d" }}
+            </p>
+            <div>
+              <a href="{% url 'habits:track_habit' habit.id %}" class="btn btn-sm btn-primary">
+                Track
+              </a>
+              <a href="{% url 'habits:abort_process' habit.id %}" class="btn btn-sm btn-danger">
+                Abort
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>No habits found. <a href="{% url 'habits:form_new_habit' %}">Create one?</a></p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,72 @@
+services:
+  db:
+    image: postgres:13
+    restart: always
+    container_name: habit-db
+    env_file:
+      - .env/.postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - habit_network
+
+  redis:
+    image: redis:alpine
+    restart: always
+    container_name: habit-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - habit_network
+
+  web:
+    build: .
+    restart: always
+    container_name: habit-web
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env/.postgres
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/code
+    networks:
+      - habit_network
+
+  celery_worker:
+    build: .
+    container_name: habit-celery-worker
+    command: celery -A backend.celery beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      - redis
+      - web
+    env_file:
+      - .env/.postgres
+    volumes:
+      - .:/code
+    networks:
+      - habit_network
+
+  celery_beat:
+    build: .
+    container_name: habit-celery-beat
+    command: celery -A backend beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      - redis
+      - celery_worker
+    env_file:
+      - .env/.postgres
+    volumes:
+      - .:/code
+    networks:
+      - habit_network
+
+networks:
+  habit_network:
+
+volumes:
+  postgres_data:
