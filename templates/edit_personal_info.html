@@ -3,57 +3,234 @@
 {% block content %}
 <div class="edit-info-container">
   <h2 class="text-center mb-4">Edit Personal Info</h2>
-  <div class="card mx-auto info-card p-4">
+  <div class="card shadow-sm mx-auto info-card p-4">
     <form method="post">
       {% csrf_token %}
       {{ form.phone_number|as_crispy_field }}
       {{ form.age|as_crispy_field }}
       <div class="d-flex justify-content-between mt-4">
         <button type="submit" class="btn btn-primary">Save Changes</button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#passwordModal">Change Password</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePassModal">
+          Change Password
+        </button>
       </div>
     </form>
   </div>
 </div>
-
-<div class="modal fade" id="passwordModal" tabindex="-1">
+<div class="modal fade" id="changePassModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content bg-card p-4">
-      <form method="post" action="{% url 'accounts:change_password' %}">
-        {% csrf_token %}
-        {% if forgot %}
-          {% for question, answer in security_questions.items %}
+    <div class="modal-content bg-card" style="border-radius:1rem;">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">Change Password</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="px-4 pt-1">
+        <div class="progress" style="height: 6px;">
+          <div id="wizardProgress" class="progress-bar bg-success" role="progressbar" style="width: 33%;"></div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="step1">
+          <p class="fw-bold mb-3">How do you want to change your password?</p>
+          <div class="list-group">
+            <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" id="btnUseOld">
+              I know my old password
+              <i class="bi bi-arrow-right"></i>
+            </button>
+            <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" id="btnForgotPw">
+              I forgot my old password
+              <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+        <div id="step2Old" class="d-none">
+          <label class="form-label">Enter Old Password</label>
+          <input type="password" class="form-control mb-3" id="oldPassword" placeholder="Current password">
+          <div class="text-danger small" id="oldPwError"></div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-secondary" id="backToStep1">Back</button>
+            <button type="button" class="btn btn-primary" id="verifyOldBtn">Next</button>
+          </div>
+        </div>
+        <div id="step2Sec" class="d-none">
+          <p class="fw-bold">Answer your security questions:</p>
+          <div id="securityQuestionsContainer">
+            {% for question, answer in security_questions.items %}
             <div class="mb-3">
               <label class="form-label">{{ question }}</label>
-              <input type="text" name="{{ question }}" class="form-control" required>
+              <input type="text" class="form-control secAnswer" data-question="{{ question }}">
             </div>
-          {% endfor %}
-          <button type="submit" name="verify" class="btn btn-primary w-100">Verify Answers</button>
-        {% else %}
-          {{ password_form.old_password|as_crispy_field }}
-          <button type="button" id="showNew" class="btn btn-secondary w-100 mb-3">Next</button>
-          <div id="newSection" class="d-none">
-            {{ password_form.new_password1|as_crispy_field }}
-            <small class="form-text text-muted mb-3">
+            {% endfor %}
+          </div>
+          <div class="text-danger small" id="secError"></div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-secondary" id="backToStep1b">Back</button>
+            <button type="button" class="btn btn-primary" id="verifySecBtn">Next</button>
+          </div>
+        </div>
+        <div id="step3" class="d-none">
+          <form id="newPwForm">
+            {% csrf_token %}
+            <div id="newPassErrors" class="text-danger small mb-2"></div>
+            {{ set_password_form.new_password1.label_tag }}
+            {{ set_password_form.new_password1 }}
+            <small class="text-muted d-block mb-2" style="font-size: 0.9rem;">
               • At least 8 characters<br>
               • Not entirely numeric<br>
               • Avoid common words or personal info
             </small>
-            {{ password_form.new_password2|as_crispy_field }}
-            <button type="submit" class="btn btn-success w-100">Update Password</button>
-          </div>
-          <div class="text-center mt-2">
-            <button type="submit" name="forgot" class="btn btn-link text-warning">Forgot old password?</button>
-          </div>
-        {% endif %}
-      </form>
+            {{ set_password_form.new_password2.label_tag }}
+            {{ set_password_form.new_password2 }}
+            <div class="d-flex justify-content-between mt-4">
+              <button type="button" class="btn btn-secondary" id="backStep3">Back</button>
+              <button type="button" class="btn btn-success" id="btnUpdatePw">Update Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-
 <script>
-document.getElementById('showNew').onclick = () => {
-  document.getElementById('newSection').classList.remove('d-none');
-};
+document.addEventListener("DOMContentLoaded", function () {
+    const step1 = document.getElementById('step1');
+    const step2Old = document.getElementById('step2Old');
+    const step2Sec = document.getElementById('step2Sec');
+    const step3 = document.getElementById('step3');
+    const progress = document.getElementById('wizardProgress');
+    const btnUseOld = document.getElementById('btnUseOld');
+    const btnForgotPw = document.getElementById('btnForgotPw');
+    const backToStep1 = document.getElementById('backToStep1');
+    const backToStep1b = document.getElementById('backToStep1b');
+    const verifyOldBtn = document.getElementById('verifyOldBtn');
+    const verifySecBtn = document.getElementById('verifySecBtn');
+    const backStep3 = document.getElementById('backStep3');
+    const btnUpdatePw = document.getElementById('btnUpdatePw');
+    const oldPassword = document.getElementById('oldPassword');
+    const oldPwError = document.getElementById('oldPwError');
+    const secError = document.getElementById('secError');
+    const newPassErrors = document.getElementById('newPassErrors');
+    let method = null;
+    let verifiedOldPassword = "";
+    btnUseOld.onclick = () => {
+        method = "old";
+        step1.classList.add('d-none');
+        step2Old.classList.remove('d-none');
+        progress.style.width = '66%';
+    };
+    btnForgotPw.onclick = () => {
+        method = "forgot";
+        step1.classList.add('d-none');
+        step2Sec.classList.remove('d-none');
+        progress.style.width = '66%';
+    };
+    backToStep1.onclick = () => {
+        step2Old.classList.add('d-none');
+        step1.classList.remove('d-none');
+        oldPwError.textContent = '';
+        oldPassword.value = '';
+        progress.style.width = '33%';
+    };
+    backToStep1b.onclick = () => {
+        step2Sec.classList.add('d-none');
+        step1.classList.remove('d-none');
+        secError.textContent = '';
+        document.querySelectorAll('.secAnswer').forEach(el => el.value = '');
+        progress.style.width = '33%';
+    };
+    verifyOldBtn.onclick = () => {
+        oldPwError.textContent = '';
+        fetch("{% url 'accounts:change_password' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ old_password: oldPassword.value, new_password1: '', new_password2: '' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                verifiedOldPassword = oldPassword.value;
+                step2Old.classList.add('d-none');
+                step3.classList.remove('d-none');
+                progress.style.width = '100%';
+            } else {
+                oldPwError.textContent = data.errors.old_password ? data.errors.old_password.join(', ') : 'Incorrect password.';
+            }
+        })
+        .catch(() => {
+            oldPwError.textContent = 'Server error. Please try again.';
+        });
+    };
+    verifySecBtn.onclick = () => {
+        secError.textContent = '';
+        let answers = {};
+        document.querySelectorAll('.secAnswer').forEach(el => {
+            answers[el.dataset.question] = el.value.trim();
+        });
+        fetch("{% url 'accounts:verify_security_answers' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+            body: JSON.stringify(answers)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                step2Sec.classList.add('d-none');
+                step3.classList.remove('d-none');
+                progress.style.width = '100%';
+            } else {
+                secError.textContent = 'Security answers didn’t match. Please try again.';
+            }
+        })
+        .catch(() => {
+            secError.textContent = 'Server error. Please try again.';
+        });
+    };
+    backStep3.onclick = () => {
+        if (method === 'old') {
+            step3.classList.add('d-none');
+            step2Old.classList.remove('d-none');
+            progress.style.width = '66%';
+        } else {
+            step3.classList.add('d-none');
+            step2Sec.classList.remove('d-none');
+            progress.style.width = '66%';
+        }
+        newPassErrors.textContent = '';
+        document.querySelector('[name="new_password1"]').value = '';
+        document.querySelector('[name="new_password2"]').value = '';
+    };
+    btnUpdatePw.onclick = () => {
+        newPassErrors.textContent = '';
+        const pw1 = document.querySelector('[name="new_password1"]').value;
+        const pw2 = document.querySelector('[name="new_password2"]').value;
+        let payload = { new_password1: pw1, new_password2: pw2 };
+        if (method === 'old') {
+            payload.old_password = verifiedOldPassword;
+        } else {
+            payload.verify = '1';
+        }
+        fetch("{% url 'accounts:change_password' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                alert('Password updated successfully!');
+                location.reload();
+            } else {
+                let errMsg = '';
+                for (let field in data.errors) {
+                    errMsg += `${field}: ${data.errors[field].join(', ')}\n`;
+                }
+                newPassErrors.textContent = errMsg || 'Error updating password.';
+            }
+        })
+        .catch(() => {
+            newPassErrors.textContent = 'Server error updating password.';
+        });
+    };
+});
 </script>
 {% endblock %}

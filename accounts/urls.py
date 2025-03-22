@@ -11,6 +11,7 @@ urlpatterns = [
     path('main_menu/', views.main_menu_view, name='main_menu'),
     path('edit_personal_info/', views.edit_personal_info_view, name='edit_personal_info'),
     path('change_password/', views.change_password_view, name='change_password'),
-    path('verify_password/', views.verify_password, name='verify_password'),
-
+    path('verify_security_answers/', views.verify_security_answers, name='verify_security_answers'),
+    path('public_forgot_password/', views.public_forgot_password_view, name='public_forgot_password_view'),
+    path('public_verify_security_answers/', views.public_verify_security_answers, name='public_verify_security_answers'),
 ]
