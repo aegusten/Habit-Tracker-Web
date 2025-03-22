@@ -1,8 +1,14 @@
 :root[data-theme="dark"] {
-    --card-shadow: 0 8px 16px rgba(0,0,0,0.3);
-  }
-  
-  .card {
-    background-color: var(--card-bg) !important;
-  }
-  
+  --card-bg: #2c3034;
+  --text-color: #f8f9fa;
+  ...
+}
+:root[data-theme="light"] {
+  --card-bg: #fff;
+  --text-color: #212529;
+  ...
+}
+body {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+}
