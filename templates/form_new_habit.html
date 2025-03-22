@@ -1,14 +1,12 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 
-{% load static %} 
 {% block content %}
 <div class="text-center mb-5">
   <h2>Create a New Habit</h2>
-  <p>Select a ready‑made template or build your own:</p>
+  <p>Select a ready-made template or build your own:</p>
 </div>
-<link rel="stylesheet" href="{% static 'css/custom.css' %}">
-
 <div class="row row-cols-1 row-cols-md-4 g-4 mb-4">
   {% for tpl in templates %}
     <div class="col">
@@ -27,31 +25,219 @@
     </div>
   {% endfor %}
 </div>
-
-
 <form id="habit-form" method="post" class="d-none">
   {% csrf_token %}
   {{ form|crispy }}
-  <button type="submit" class="btn btn-success w-100">Confirm</button>
+  <div id="stopSmokingFields" class="extra-fields d-none mt-4">
+    <h5>Additional Details for Stopping Smoking</h5>
+    <div class="mb-3">
+      <label class="form-label">
+        Cigarettes per Day 
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="How many cigarettes you typically smoke per day."></i>
+      </label>
+      <input type="number" name="cigarettes_per_day" class="form-control" placeholder="e.g., 20">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Craving Level (1-10)
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Rate your current craving on a scale from 1 to 10."></i>
+      </label>
+      <input type="number" name="craving_level" class="form-control" min="1" max="10" placeholder="e.g., 5">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Planned Quit Date
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Set a target date to fully quit smoking."></i>
+      </label>
+      <input type="date" name="planned_quit_date" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Nicotine Replacement Method
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="e.g., patch, gum, lozenges, or none."></i>
+      </label>
+      <input type="text" name="nicotine_replacement" class="form-control" placeholder="e.g., patch, gum">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Triggers & Coping Strategies
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="List triggers and how you'll cope."></i>
+      </label>
+      <textarea name="trigger_coping" class="form-control" rows="3" placeholder="Describe triggers & coping methods"></textarea>
+    </div>
+  </div>
+  <div id="wakeUpEarlyFields" class="extra-fields d-none mt-4">
+    <h5>Additional Details for Waking Up Early</h5>
+    <div class="mb-3">
+      <label class="form-label">
+        Current Wake Time
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Your usual time of waking up now."></i>
+      </label>
+      <input type="time" name="current_wake_time" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Desired Wake Time
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Your target wake time."></i>
+      </label>
+      <input type="time" name="desired_wake_time" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Bedtime
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="What time do you usually go to bed?"></i>
+      </label>
+      <input type="time" name="bedtime" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Sleep Quality (1-10)
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Rate how rested you feel, from 1 to 10."></i>
+      </label>
+      <input type="number" name="sleep_quality" class="form-control" min="1" max="10" placeholder="Rate your sleep quality">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Number of Snoozes
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Times you hit the snooze button."></i>
+      </label>
+      <input type="number" name="snooze_count" class="form-control" placeholder="e.g., 2">
+    </div>
+  </div>
+  <div id="eatHealthyFields" class="extra-fields d-none mt-4">
+    <h5>Additional Details for Eating Healthy</h5>
+    <div class="mb-3">
+      <label class="form-label">
+        Daily Calorie Target
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Approximate daily calorie goal."></i>
+      </label>
+      <input type="number" name="daily_calorie_target" class="form-control" placeholder="e.g., 2000">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Fruit & Vegetable Servings
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Daily servings of fruits/veggies."></i>
+      </label>
+      <input type="number" name="fruit_veg_target" class="form-control" placeholder="e.g., 5 servings">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Water Intake Goal (glasses/day)
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="How many glasses of water per day."></i>
+      </label>
+      <input type="number" name="water_intake_goal" class="form-control" placeholder="e.g., 8">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Junk Food Consumption (optional)
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Track cheat meals or snacks."></i>
+      </label>
+      <input type="number" name="junk_food_consumption" class="form-control" placeholder="e.g., cheat meals per week">
+    </div>
+  </div>
+  <div id="customFieldsSection" class="extra-fields d-none mt-4">
+    <h5>Custom Fields</h5>
+    <p class="text-muted small">
+      Add your own metrics to track. For example, “Snooze Presses,” “Water at Bedtime,” etc. Select a field type to control how data is tracked.
+    </p>
+    <div id="customFieldsContainer"></div>
+    <button type="button" id="addCustomField" class="btn btn-outline-primary btn-sm mt-2">
+      Add Custom Field
+    </button>
+  </div>
+  <div id="guidelines-section" class="mt-5 d-none">
+    <h5>User Guidelines & Gamification</h5>
+    <p class="mb-4">
+      Once you confirm, the system will begin tracking your progress. You’ll earn points for daily achievements, which contribute to unlocking badges. Keep your streak alive and stay motivated!
+    </p>
+  </div>
+  <button type="submit" class="btn btn-success w-100 mt-3">Confirm</button>
 </form>
-
 <script>
-  const presets = {{ templates|safe }};
-  document.querySelectorAll('.template-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const form = document.getElementById('habit-form');
-      form.classList.remove('d-none');
-      form.reset();
-      const tpl = card.dataset.template;
-      if (tpl !== 'custom') {
-        Object.entries(presets.find(t=>t.key===tpl)).forEach(([field,value])=>{
-          const input = form.querySelector(`[name="${field}"]`);
-          if(input) input.value = value;
-        });
+document.addEventListener('DOMContentLoaded',function(){
+  const habitForm=document.getElementById('habit-form')
+  const guidelinesSection=document.getElementById('guidelines-section')
+  const stopSmokingFields=document.getElementById('stopSmokingFields')
+  const wakeUpEarlyFields=document.getElementById('wakeUpEarlyFields')
+  const eatHealthyFields=document.getElementById('eatHealthyFields')
+  const customFieldsSection=document.getElementById('customFieldsSection')
+  const customFieldsContainer=document.getElementById('customFieldsContainer')
+  const addCustomFieldBtn=document.getElementById('addCustomField')
+  function hideAllExtraFields(){
+    [stopSmokingFields,wakeUpEarlyFields,eatHealthyFields,customFieldsSection].forEach(d=>d.classList.add('d-none'))
+    customFieldsContainer.innerHTML=''
+  }
+  addCustomFieldBtn.addEventListener('click',()=>{
+    const fieldId='field-'+Date.now()
+    const fieldHTML=`
+    <div class="row mb-2 align-items-end custom-field" id="${fieldId}">
+      <div class="col-md-3">
+        <label class="form-label">Field Name <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" title="Enter a descriptive label for your metric."></i></label>
+        <input type="text" name="custom_field_key[]" class="form-control" placeholder="e.g., Snoozes">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Field Type <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" title="Choose how you want to track data."></i></label>
+        <select name="custom_field_type[]" class="form-select custom-field-type">
+          <option value="text">Text</option>
+          <option value="number">Number</option>
+          <option value="date">Date</option>
+          <option value="time">Time</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Default Value <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" title="Optional starting value."></i></label>
+        <input type="text" name="custom_field_value[]" class="form-control custom-field-value" placeholder="(optional)">
+      </div>
+      <div class="col-md-2 text-end">
+        <button type="button" class="btn btn-outline-danger remove-field" data-field-id="${fieldId}">Remove</button>
+      </div>
+    </div>`
+    customFieldsContainer.insertAdjacentHTML('beforeend',fieldHTML)
+    initTooltips()
+  })
+  document.addEventListener('change',e=>{
+    if(e.target.classList.contains('custom-field-type')){
+      const row=e.target.closest('.custom-field')
+      const defaultValueInput=row.querySelector('.custom-field-value')
+      defaultValueInput.type=e.target.value
+      defaultValueInput.value=''
+    }
+  })
+  document.addEventListener('click',e=>{
+    if(e.target.classList.contains('remove-field')){
+      const fieldId=e.target.getAttribute('data-field-id')
+      const fieldRow=document.getElementById(fieldId)
+      if(fieldRow){fieldRow.remove()}
+    }
+  })
+  function initTooltips(){
+    let tooltipTriggerList=[].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(function(t){return new bootstrap.Tooltip(t)})
+  }
+  initTooltips()
+  document.querySelectorAll('.template-card').forEach(card=>{
+    card.addEventListener('click',()=>{
+      habitForm.classList.remove('d-none')
+      habitForm.reset()
+      guidelinesSection.classList.add('d-none')
+      hideAllExtraFields()
+      const tpl=card.dataset.template
+      if(tpl!=='custom'){
+        if(tpl==='stop_smoking'){stopSmokingFields.classList.remove('d-none')}
+        else if(tpl==='wake_up_early'){wakeUpEarlyFields.classList.remove('d-none')}
+        else if(tpl==='eat_healthy'){eatHealthyFields.classList.remove('d-none')}
       }
-    });
-  });
+      customFieldsSection.classList.remove('d-none')
+      guidelinesSection.classList.remove('d-none')
+    })
+  })
+})
 </script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 {% endblock %}
+
+<style>
+.template-card{cursor:pointer;}
+</style>
