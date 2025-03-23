@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h2>Update Reminders</h2>
+    <form method="post">
+        {% csrf_token %}
+        <select name="reminder_frequency">
+            <option value="daily" {% if habit.motivational_reminder == 'daily' %}selected{% endif %}>Daily</option>
+            <option value="weekly" {% if habit.motivational_reminder == 'weekly' %}selected{% endif %}>Weekly</option>
+        </select>
+        <button type="submit">Update</button>
+    </form>
+</div>
+{% endblock %}

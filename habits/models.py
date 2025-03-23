@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils.timezone import now
 
 class Habit(models.Model):
     TIMELINE_CHOICES = [
@@ -38,3 +39,15 @@ class HabitRecord(models.Model):
 
     class Meta:
         unique_together = ('habit','date')
+        
+        
+def update_streak(self):
+    records = HabitRecord.objects.filter(habit=self).order_by('-date')
+    streak = 0
+    for record in records:
+        if (record.date - now().date()).days == streak:
+            streak += 1
+        else:
+            break
+    self.streak = streak
+    self.save()

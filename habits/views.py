@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .forms import HabitForm, HabitRecordForm
 from .models import Habit, HabitRecord
+from django.utils.timezone import now
+from django.db.models import Sum, Count
 
 PRESET_HABITS = {
     'stop_smoking': {
@@ -113,7 +115,6 @@ def form_new_habit_view(request):
         'templates': PRESET_TEMPLATES
     })
 
-
 @login_required
 def ongoing_habit_view(request):
     habits = Habit.objects.filter(user=request.user)
@@ -141,3 +142,84 @@ def abort_process_view(request, habit_id):
     habit = get_object_or_404(Habit, id=habit_id, user=request.user)
     habit.delete()
     return redirect('habits:ongoing_habit')
+
+@login_required
+def track_habit_detail_view(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+
+    streak = habit.streak if habit.streak else 0
+
+    total_points = habit.points
+
+    badge = None
+    if total_points >= 150:
+        badge = "Platinum"
+    elif total_points >= 75:
+        badge = "Gold"
+    elif total_points > 0:
+        badge = "Silver"
+
+    habit_records = HabitRecord.objects.filter(habit=habit).order_by("date")
+    
+    total_days = (habit.created_at.date() - now().date()).days
+    days_remaining = habit.timeline
+    committed_days = total_days - days_remaining if total_days > 0 else 0
+
+    context = {
+        "habit": habit,
+        "streak": streak,
+        "total_points": total_points,
+        "badge": badge,
+        "habit_records": habit_records,
+        "committed_days": committed_days,
+        "days_remaining": days_remaining,
+    }
+    
+    return render(request, "track_habit_detail.html", context)
+
+@login_required
+def update_habit(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+    if request.method == 'POST':
+        habit.motivational_reminder = request.POST.get('reminder_frequency', habit.motivational_reminder)
+        habit.timeline = request.POST.get('timeline', habit.timeline)
+        habit.save()
+    return redirect('habits:track_habit_detail', habit_id=habit.id)
+
+@login_required
+def view_streaks(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+    return render(request, "track_habits/view_streaks.html", {"habit": habit, "streak": habit.streak})
+
+@login_required
+def view_points(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+    points = habit.points
+    badge = "Platinum" if points >= 150 else "Gold" if points >= 75 else "Silver" if points > 0 else None
+    return render(request, "track_habits/view_points.html", {"habit": habit, "points": points, "badge": badge})
+
+@login_required
+def upcoming_challenges(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+    return render(request, "track_habits/upcoming_challenges.html", {"habit": habit})
+
+@login_required
+def view_insights(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+    return render(request, "track_habits/view_insights.html", {"habit": habit})
+
+@login_required
+def update_reminders(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+    if request.method == "POST":
+        habit.motivational_reminder = request.POST.get("reminder_frequency", habit.motivational_reminder)
+        habit.save()
+    return render(request, "track_habits/update_reminders.html", {"habit": habit})
+
+@login_required
+def update_goal(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+    if request.method == "POST":
+        habit.timeline = request.POST.get("timeline", habit.timeline)
+        habit.save()
+    return render(request, "track_habits/update_goal.html", {"habit": habit})
