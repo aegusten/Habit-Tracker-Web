@@ -1,57 +1,16 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 
-{% load static %} 
 {% block content %}
-<div class="text-center mb-5">
-  <h2>Create a New Habit</h2>
-  <p>Select a ready‑made template or build your own:</p>
-</div>
-<link rel="stylesheet" href="{% static 'css/custom.css' %}">
-
-<div class="row row-cols-1 row-cols-md-4 g-4 mb-4">
-  {% for tpl in templates %}
-    <div class="col">
-      <div class="card template-card text-center" data-template="{{ tpl.key }}">
-        <div class="card-body">
-          {% if tpl.key == 'stop_smoking' %}
-            <i class="bi bi-x-circle display-4 mb-3"></i>
-          {% elif tpl.key == 'eat_healthy' %}
-            <i class="bi bi-nut display-4 mb-3"></i>
-          {% else %}
-            <i class="bi {{ tpl.icon }} display-4 mb-3"></i>
-          {% endif %}
-          <h5 class="card-title">{{ tpl.label }}</h5>
-        </div>
-      </div>
-    </div>
-  {% endfor %}
-</div>
-
-
-<form id="habit-form" method="post" class="d-none">
-  {% csrf_token %}
-  {{ form|crispy }}
-  <button type="submit" class="btn btn-success w-100">Confirm</button>
-</form>
-
-<script>
-  const presets = {{ templates|safe }};
-  document.querySelectorAll('.template-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const form = document.getElementById('habit-form');
-      form.classList.remove('d-none');
-      form.reset();
-      const tpl = card.dataset.template;
-      if (tpl !== 'custom') {
-        Object.entries(presets.find(t=>t.key===tpl)).forEach(([field,value])=>{
-          const input = form.querySelector(`[name="${field}"]`);
-          if(input) input.value = value;
-        });
-      }
-    });
-  });
-</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-
+  {% include 'habits_templates/habit_main.html' %}
+  {% include 'habits_templates/habit_form_prepared.html' %}
+  {% include 'habits_templates/habit_form_custom.html' %}
 {% endblock %}
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+  .template-card { cursor: pointer; }
+</style>

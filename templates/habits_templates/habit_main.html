@@ -1,0 +1,28 @@
+{% load crispy_forms_tags %}
+{% load static %}
+
+<div class="text-center mb-5">
+  <h2>Create a New Habit</h2>
+  <p>Select a ready-made template or build your own:</p>
+</div>
+<div class="row row-cols-1 row-cols-md-4 g-4 mb-4">
+  {% for tpl in templates %}
+    <div class="col">
+      <div class="card template-card text-center" data-template="{{ tpl.key }}">
+        <div class="card-body">
+          {% if tpl.key == 'stop_smoking' %}
+            <i class="bi bi-x-circle display-4 mb-3"></i>
+          {% elif tpl.key == 'eat_healthy' %}
+            <i class="bi bi-nut display-4 mb-3"></i>
+          {% else %}
+            <i class="bi {{ tpl.icon }} display-4 mb-3"></i>
+          {% endif %}
+          <h5 class="card-title">{{ tpl.label }}</h5>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/habit_form.js' %}"></script>

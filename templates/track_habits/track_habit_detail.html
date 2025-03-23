@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container">
+    <h2>Track Habit: {{ habit.name }}</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">View Streaks</h5>
+                    <p class="card-text">Current Streak: {{ streak }} days</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">View Points</h5>
+                    <p class="card-text">Total Points: {{ total_points }}</p>
+                    {% if badge %}
+                        <p class="card-text">Badge Earned: {{ badge }}</p>
+                    {% else %}
+                        <p class="card-text">No Badge Earned Yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Challenges</h5>
+                    <p class="card-text">Days Remaining: {{ days_remaining }}</p>
+                    <p class="card-text">Next Badge: 
+                        {% if total_points < 75 %}
+                            Silver (75 pts)
+                        {% elif total_points < 150 %}
+                            Gold (150 pts)
+                        {% else %}
+                            Platinum (Achieved)
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">View Insights</h5>
+                    <canvas id="habitChart"></canvas>
+                    <p>Committed Days: {{ committed_days }}</p>
+                    <p>Days of Commitment Yet to Come: {{ days_remaining }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Update Reminders</h5>
+                    <form method="post" action="{% url 'habits:track_habit_detail' habit.id %}">
+                        {% csrf_token %}
+                        <select name="reminder_frequency" class="form-control">
+                            <option value="daily" {% if habit.motivational_reminder == 'daily' %}selected{% endif %}>Daily</option>
+                            <option value="weekly" {% if habit.motivational_reminder == 'weekly' %}selected{% endif %}>Weekly</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary mt-2">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Update Goal</h5>
+                    <form method="post" action="{% url 'habits:track_habit_detail' habit.id %}">
+                        {% csrf_token %}
+                        <select name="timeline" class="form-control">
+                            <option value="1" {% if habit.timeline == '1' %}selected{% endif %}>1 Month</option>
+                            <option value="2" {% if habit.timeline == '2' %}selected{% endif %}>2 Months</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary mt-2">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var ctx = document.getElementById('habitChart').getContext('2d');
+    var habitChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [{% for record in habit_records %}"{{ record.date }}",{% endfor %}],
+            datasets: [{
+                label: 'Progress',
+                data: [{% for record in habit_records %}{{ record.data|length }},{% endfor %}],
+                borderColor: 'blue',
+                borderWidth: 2,
+                fill: false
+            }]
+        }
+    });
+});
+</script>
+{% endblock %}

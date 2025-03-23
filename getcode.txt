@@ -755,6 +755,7 @@ class Migration(migrations.Migration):
 // File: habits/models.py
 from django.db import models
 from django.conf import settings
+from django.utils.timezone import now
 
 class Habit(models.Model):
     TIMELINE_CHOICES = [
@@ -793,6 +794,19 @@ class HabitRecord(models.Model):
 
     class Meta:
         unique_together = ('habit','date')
+        
+        
+def update_streak(self):
+    records = HabitRecord.objects.filter(habit=self).order_by('-date')
+    streak = 0
+    for record in records:
+        if (record.date - now().date()).days == streak:
+            streak += 1
+        else:
+            break
+    self.streak = streak
+    self.save()
+
 // File: habits/settings.py
 import os
 from pathlib import Path
@@ -810,9 +824,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'crispy_forms',
+    'crispy_bootstrap5',
+    
     'accounts',
     'habits'
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -822,7 +844,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware'
 ]
+
 ROOT_URLCONF = 'habits.urls'
+
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 TEMPLATES = [
     {
@@ -834,6 +859,7 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
+                'context_processors',
                 'django.contrib.messages.context_processors.messages'
             ]
         }
@@ -879,6 +905,7 @@ urlpatterns = [
     path('ongoing/', views.ongoing_habit_view, name='ongoing_habit'),
     path('track/<int:habit_id>/', views.track_habit_view, name='track_habit'),
     path('abort/<int:habit_id>/', views.abort_process_view, name='abort_process'),
+    path('track_habit/<int:habit_id>/', views.track_habit_detail_view, name='track_habit_detail'),
 ]
 
 // File: habits/views.py
@@ -887,21 +914,66 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .forms import HabitForm, HabitRecordForm
 from .models import Habit, HabitRecord
+from django.utils.timezone import now
+from django.db.models import Sum, Count
 
 PRESET_HABITS = {
     'stop_smoking': {
-        'metrics': {'cigarettes_per_day':0, 'days_smoke_free':0, 'money_saved':0, 'craving_intensity':0},
-        'targets': {'cigarettes_per_day':0}
+        'metrics': {
+            'cigarettes_per_day': 0,
+            'craving_level': None,
+            'planned_quit_date': None,
+            'nicotine_replacement': '',
+            'trigger_coping': ''
+        },
+        'targets': {
+            'cigarettes_per_day': 0
+        },
+        'extra_fields': [
+            {'key': 'cigarettes_per_day', 'label': 'Cigarettes per Day', 'type': 'number'},
+            {'key': 'craving_level', 'label': 'Craving Level (1-10)', 'type': 'number'},
+            {'key': 'planned_quit_date', 'label': 'Planned Quit Date', 'type': 'date'},
+            {'key': 'nicotine_replacement', 'label': 'Nicotine Replacement', 'type': 'text'},
+            {'key': 'trigger_coping', 'label': 'Triggers & Coping Strategies', 'type': 'textarea'},
+        ]
     },
     'wake_up_early': {
-        'metrics': {'wake_time':None, 'bedtime':None, 'sleep_duration':0, 'streak_count':0},
-        'targets': {'wake_time': '06:00'}
+        'metrics': {
+            'current_wake_time': None,
+            'desired_wake_time': None,
+            'bedtime': None,
+            'sleep_quality': None,
+            'snooze_count': 0
+        },
+        'targets': {},
+        'extra_fields': [
+            {'key': 'current_wake_time', 'label': 'Current Wake Time', 'type': 'time'},
+            {'key': 'desired_wake_time', 'label': 'Desired Wake Time', 'type': 'time'},
+            {'key': 'bedtime', 'label': 'Bedtime', 'type': 'time'},
+            {'key': 'sleep_quality', 'label': 'Sleep Quality (1-10)', 'type': 'number'},
+            {'key': 'snooze_count', 'label': 'Number of Snoozes', 'type': 'number'},
+        ]
     },
     'eat_healthy': {
-        'metrics': {'meals_logged':0, 'fruit_veg_servings':0, 'water_glasses':0, 'hunger_rating':0},
-        'targets': {'fruit_veg_servings':5}
+        'metrics': {
+            'daily_calorie_target': 2000,
+            'fruit_veg_target': 5,
+            'water_intake_goal': 8,
+            'junk_food_consumption': 0
+        },
+        'targets': {
+            'fruit_veg_target': 5,
+            'water_intake_goal': 8
+        },
+        'extra_fields': [
+            {'key': 'daily_calorie_target', 'label': 'Daily Calorie Target', 'type': 'number'},
+            {'key': 'fruit_veg_target', 'label': 'Fruit & Vegetable Servings', 'type': 'number'},
+            {'key': 'water_intake_goal', 'label': 'Water Intake (glasses/day)', 'type': 'number'},
+            {'key': 'junk_food_consumption', 'label': 'Junk Food Consumption', 'type': 'number'},
+        ]
     }
 }
+
 
 PRESET_TEMPLATES = [
     {'key':'stop_smoking','icon':'bi-emoji-smile','label':'Stop Smoking'},
@@ -910,23 +982,49 @@ PRESET_TEMPLATES = [
     {'key':'custom','icon':'bi-pencil-square','label':'Custom'},
 ]
 
-@login_required
 def form_new_habit_view(request):
     template_key = request.GET.get('template')
-    initial = PRESET_HABITS.get(template_key, {}) if template_key else {}
     if request.method == 'POST':
         form = HabitForm(request.POST)
         if form.is_valid():
             habit = form.save(commit=False)
             habit.user = request.user
+            
             if template_key in PRESET_HABITS:
-                habit.metrics = PRESET_HABITS[template_key]['metrics']
-                habit.targets = PRESET_HABITS[template_key]['targets']
+                preset = PRESET_HABITS[template_key]
+                habit.metrics = preset.get('metrics', {}).copy()
+                habit.targets = preset.get('targets', {}).copy()
+                
+                for field in preset.get('extra_fields', []):
+                    key = field['key']
+                    val = request.POST.get(key, None)
+                    if val is not None:
+                        habit.metrics[key] = val
+            
+            custom_keys = request.POST.getlist('custom_field_key[]', [])
+            custom_types = request.POST.getlist('custom_field_type[]', [])
+            custom_values = request.POST.getlist('custom_field_value[]', [])
+
+            for i in range(len(custom_keys)):
+                field_name = custom_keys[i].strip()
+                field_type = custom_types[i].strip()
+                default_val = custom_values[i].strip()
+
+                if field_name:
+                    habit.metrics[field_name] = {
+                        'type': field_type,
+                        'default': default_val
+                    }
+            
             habit.save()
             return redirect('habits:ongoing_habit')
     else:
-        form = HabitForm(initial=initial)
-    return render(request, 'form_new_habit.html', {'form': form, 'templates': PRESET_TEMPLATES})
+        form = HabitForm()
+
+    return render(request, 'form_new_habit.html', {
+        'form': form,
+        'templates': PRESET_TEMPLATES
+    })
 
 @login_required
 def ongoing_habit_view(request):
@@ -955,6 +1053,50 @@ def abort_process_view(request, habit_id):
     habit = get_object_or_404(Habit, id=habit_id, user=request.user)
     habit.delete()
     return redirect('habits:ongoing_habit')
+
+@login_required
+def track_habit_detail_view(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+
+    streak = habit.streak if habit.streak else 0
+
+    total_points = habit.points
+
+    badge = None
+    if total_points >= 150:
+        badge = "Platinum"
+    elif total_points >= 75:
+        badge = "Gold"
+    elif total_points > 0:
+        badge = "Silver"
+
+    habit_records = HabitRecord.objects.filter(habit=habit).order_by("date")
+    
+    total_days = (habit.created_at.date() - now().date()).days
+    days_remaining = habit.timeline
+    committed_days = total_days - days_remaining if total_days > 0 else 0
+
+    context = {
+        "habit": habit,
+        "streak": streak,
+        "total_points": total_points,
+        "badge": badge,
+        "habit_records": habit_records,
+        "committed_days": committed_days,
+        "days_remaining": days_remaining,
+    }
+    
+    return render(request, "track_habit_detail.html", context)
+
+@login_required
+def update_habit(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+    if request.method == 'POST':
+        habit.motivational_reminder = request.POST.get('reminder_frequency', habit.motivational_reminder)
+        habit.timeline = request.POST.get('timeline', habit.timeline)
+        habit.save()
+    return redirect('habits:track_habit_detail', habit_id=habit.id)
+
 // File: habits/wsgi.py
 import os
 from django.core.wsgi import get_wsgi_application
@@ -1128,7 +1270,11 @@ body {
 // File: templates/edit_personal_info.html
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+
 {% block content %}
+
+{% load static %}
+
 <div class="edit-info-container">
   <h2 class="text-center mb-4">Edit Personal Info</h2>
   <div class="card shadow-sm mx-auto info-card p-4">
@@ -1219,162 +1365,169 @@ body {
     </div>
   </div>
 </div>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const step1 = document.getElementById('step1');
-    const step2Old = document.getElementById('step2Old');
-    const step2Sec = document.getElementById('step2Sec');
-    const step3 = document.getElementById('step3');
-    const progress = document.getElementById('wizardProgress');
-    const btnUseOld = document.getElementById('btnUseOld');
-    const btnForgotPw = document.getElementById('btnForgotPw');
-    const backToStep1 = document.getElementById('backToStep1');
-    const backToStep1b = document.getElementById('backToStep1b');
-    const verifyOldBtn = document.getElementById('verifyOldBtn');
-    const verifySecBtn = document.getElementById('verifySecBtn');
-    const backStep3 = document.getElementById('backStep3');
-    const btnUpdatePw = document.getElementById('btnUpdatePw');
-    const oldPassword = document.getElementById('oldPassword');
-    const oldPwError = document.getElementById('oldPwError');
-    const secError = document.getElementById('secError');
-    const newPassErrors = document.getElementById('newPassErrors');
-    let method = null;
-    let verifiedOldPassword = "";
-    btnUseOld.onclick = () => {
-        method = "old";
-        step1.classList.add('d-none');
-        step2Old.classList.remove('d-none');
-        progress.style.width = '66%';
-    };
-    btnForgotPw.onclick = () => {
-        method = "forgot";
-        step1.classList.add('d-none');
-        step2Sec.classList.remove('d-none');
-        progress.style.width = '66%';
-    };
-    backToStep1.onclick = () => {
-        step2Old.classList.add('d-none');
-        step1.classList.remove('d-none');
-        oldPwError.textContent = '';
-        oldPassword.value = '';
-        progress.style.width = '33%';
-    };
-    backToStep1b.onclick = () => {
-        step2Sec.classList.add('d-none');
-        step1.classList.remove('d-none');
-        secError.textContent = '';
-        document.querySelectorAll('.secAnswer').forEach(el => el.value = '');
-        progress.style.width = '33%';
-    };
-    verifyOldBtn.onclick = () => {
-        oldPwError.textContent = '';
-        fetch("{% url 'accounts:change_password' %}", {
-            method: 'POST',
-            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ old_password: oldPassword.value, new_password1: '', new_password2: '' })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok) {
-                verifiedOldPassword = oldPassword.value;
-                step2Old.classList.add('d-none');
-                step3.classList.remove('d-none');
-                progress.style.width = '100%';
-            } else {
-                oldPwError.textContent = data.errors.old_password ? data.errors.old_password.join(', ') : 'Incorrect password.';
-            }
-        })
-        .catch(() => {
-            oldPwError.textContent = 'Server error. Please try again.';
-        });
-    };
-    verifySecBtn.onclick = () => {
-        secError.textContent = '';
-        let answers = {};
-        document.querySelectorAll('.secAnswer').forEach(el => {
-            answers[el.dataset.question] = el.value.trim();
-        });
-        fetch("{% url 'accounts:verify_security_answers' %}", {
-            method: 'POST',
-            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
-            body: JSON.stringify(answers)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.valid) {
-                step2Sec.classList.add('d-none');
-                step3.classList.remove('d-none');
-                progress.style.width = '100%';
-            } else {
-                secError.textContent = 'Security answers didn’t match. Please try again.';
-            }
-        })
-        .catch(() => {
-            secError.textContent = 'Server error. Please try again.';
-        });
-    };
-    backStep3.onclick = () => {
-        if (method === 'old') {
-            step3.classList.add('d-none');
-            step2Old.classList.remove('d-none');
-            progress.style.width = '66%';
-        } else {
-            step3.classList.add('d-none');
-            step2Sec.classList.remove('d-none');
-            progress.style.width = '66%';
-        }
-        newPassErrors.textContent = '';
-        document.querySelector('[name="new_password1"]').value = '';
-        document.querySelector('[name="new_password2"]').value = '';
-    };
-    btnUpdatePw.onclick = () => {
-        newPassErrors.textContent = '';
-        const pw1 = document.querySelector('[name="new_password1"]').value;
-        const pw2 = document.querySelector('[name="new_password2"]').value;
-        let payload = { new_password1: pw1, new_password2: pw2 };
-        if (method === 'old') {
-            payload.old_password = verifiedOldPassword;
-        } else {
-            payload.verify = '1';
-        }
-        fetch("{% url 'accounts:change_password' %}", {
-            method: 'POST',
-            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok) {
-                alert('Password updated successfully!');
-                location.reload();
-            } else {
-                let errMsg = '';
-                for (let field in data.errors) {
-                    errMsg += `${field}: ${data.errors[field].join(', ')}\n`;
-                }
-                newPassErrors.textContent = errMsg || 'Error updating password.';
-            }
-        })
-        .catch(() => {
-            newPassErrors.textContent = 'Server error updating password.';
-        });
-    };
-});
-</script>
+
+<script src="{% static 'js/edit_personal_details.js' %}"></script>
 {% endblock %}
 
 // File: templates/form_new_habit.html
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 
-{% load static %} 
 {% block content %}
+  {% include 'habits_templates/habit_main.html' %}
+  {% include 'habits_templates/habit_form_prepared.html' %}
+  {% include 'habits_templates/habit_form_custom.html' %}
+{% endblock %}
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+  .template-card { cursor: pointer; }
+</style>
+
+// File: templates/habits_templates/habit_form_custom.html
+<div id="customFieldsSection" class="extra-fields d-none mt-4">
+    <h5>Custom Fields</h5>
+    <p class="text-muted small">
+      Add your own metrics to track. For example, “Snooze Presses” or “Water at Bedtime.” Select a field type to control how data is tracked.
+    </p>
+    <div id="customFieldsContainer"></div>
+    <button type="button" id="addCustomField" class="btn btn-outline-primary btn-sm mt-2">Add Custom Field</button>
+  </div>
+  <div id="guidelines-section" class="mt-5 d-none">
+    <h5>User Guidelines & Gamification</h5>
+    <p class="mb-4">
+      The system will track your progress and award points for daily achievements, which help unlock badges. This gamification approach is designed to keep you motivated and engaged with your habit.
+    </p>
+  </div>
+  <button type="submit" class="btn btn-success w-100 mt-3">Confirm</button>
+</div>
+
+// File: templates/habits_templates/habit_form_prepared.html
+{% load crispy_forms_tags %}
+<form id="habit-form" method="post" class="d-none">
+  {% csrf_token %}
+  {{ form|crispy }}
+  <div id="stopSmokingFields" class="extra-fields d-none mt-4">
+    <h5>Additional Details for Stopping Smoking</h5>
+    <div class="mb-3">
+      <label class="form-label">
+        Cigarettes per Day 
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="How many cigarettes you typically smoke per day."></i>
+      </label>
+      <input type="number" name="cigarettes_per_day" class="form-control" placeholder="e.g., 20">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Craving Level (1-10)
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Rate your current craving on a scale from 1 to 10."></i>
+      </label>
+      <input type="number" name="craving_level" class="form-control" min="1" max="10" placeholder="e.g., 5">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Planned Quit Date
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Set a target date to fully quit smoking."></i>
+      </label>
+      <input type="date" name="planned_quit_date" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Nicotine Replacement Method
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="e.g., patch, gum, lozenges, or none."></i>
+      </label>
+      <input type="text" name="nicotine_replacement" class="form-control" placeholder="e.g., patch, gum">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Triggers & Coping Strategies
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="List triggers and how you'll cope."></i>
+      </label>
+      <textarea name="trigger_coping" class="form-control" rows="3" placeholder="Describe triggers & coping methods"></textarea>
+    </div>
+  </div>
+  <div id="wakeUpEarlyFields" class="extra-fields d-none mt-4">
+    <h5>Additional Details for Waking Up Early</h5>
+    <div class="mb-3">
+      <label class="form-label">
+        Current Wake Time
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Your usual time of waking up now."></i>
+      </label>
+      <input type="time" name="current_wake_time" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Desired Wake Time
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Your target wake time."></i>
+      </label>
+      <input type="time" name="desired_wake_time" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Bedtime
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="What time do you usually go to bed?"></i>
+      </label>
+      <input type="time" name="bedtime" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Sleep Quality (1-10)
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Rate how rested you feel, from 1 to 10."></i>
+      </label>
+      <input type="number" name="sleep_quality" class="form-control" min="1" max="10" placeholder="Rate your sleep quality">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Number of Snoozes
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Times you hit the snooze button."></i>
+      </label>
+      <input type="number" name="snooze_count" class="form-control" placeholder="e.g., 2">
+    </div>
+  </div>
+  <div id="eatHealthyFields" class="extra-fields d-none mt-4">
+    <h5>Additional Details for Eating Healthy</h5>
+    <div class="mb-3">
+      <label class="form-label">
+        Daily Calorie Target
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Approximate daily calorie goal."></i>
+      </label>
+      <input type="number" name="daily_calorie_target" class="form-control" placeholder="e.g., 2000">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Fruit & Vegetable Servings
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Daily servings of fruits/veggies."></i>
+      </label>
+      <input type="number" name="fruit_veg_target" class="form-control" placeholder="e.g., 5 servings">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Water Intake Goal (glasses/day)
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="How many glasses of water per day."></i>
+      </label>
+      <input type="number" name="water_intake_goal" class="form-control" placeholder="e.g., 8">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        Junk Food Consumption (optional)
+        <i class="bi bi-question-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Track cheat meals or snacks."></i>
+      </label>
+      <input type="number" name="junk_food_consumption" class="form-control" placeholder="e.g., cheat meals per week">
+    </div>
+  </div>
+</form>
+
+
+// File: templates/habits_templates/habit_main.html
+{% load crispy_forms_tags %}
+{% load static %}
+
 <div class="text-center mb-5">
   <h2>Create a New Habit</h2>
-  <p>Select a ready‑made template or build your own:</p>
+  <p>Select a ready-made template or build your own:</p>
 </div>
-<link rel="stylesheet" href="{% static 'css/custom.css' %}">
-
 <div class="row row-cols-1 row-cols-md-4 g-4 mb-4">
   {% for tpl in templates %}
     <div class="col">
@@ -1394,33 +1547,8 @@ document.addEventListener("DOMContentLoaded", function () {
   {% endfor %}
 </div>
 
-
-<form id="habit-form" method="post" class="d-none">
-  {% csrf_token %}
-  {{ form|crispy }}
-  <button type="submit" class="btn btn-success w-100">Confirm</button>
-</form>
-
-<script>
-  const presets = {{ templates|safe }};
-  document.querySelectorAll('.template-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const form = document.getElementById('habit-form');
-      form.classList.remove('d-none');
-      form.reset();
-      const tpl = card.dataset.template;
-      if (tpl !== 'custom') {
-        Object.entries(presets.find(t=>t.key===tpl)).forEach(([field,value])=>{
-          const input = form.querySelector(`[name="${field}"]`);
-          if(input) input.value = value;
-        });
-      }
-    });
-  });
-</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-
-{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/habit_form.js' %}"></script>
 
 // File: templates/home.html
 {% extends 'base.html' %}
@@ -1447,6 +1575,8 @@ document.addEventListener("DOMContentLoaded", function () {
 {% load crispy_forms_tags %}
 
 {% block title %}Login{% endblock %}
+
+{% load static %}
 
 {% block content %}
 
@@ -1565,169 +1695,7 @@ document.addEventListener("DOMContentLoaded", function () {
   </div>
 </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-  const fpStep1 = document.getElementById('fpStep1');
-  const fpStep2Old = document.getElementById('fpStep2Old');
-  const fpStep2Sec = document.getElementById('fpStep2Sec');
-  const fpStep3 = document.getElementById('fpStep3');
-  const fpIdNumber = document.getElementById('fpIdNumber');
-  const fpOldPassword = document.getElementById('fpOldPassword');
-  const fpError1 = document.getElementById('fpError1');
-  const fpError2 = document.getElementById('fpError2');
-  const fpErrorSec = document.getElementById('fpErrorSec');
-  const fpError3 = document.getElementById('fpError3');
-  const fpOldPwBtn = document.getElementById('fpOldPwBtn');
-  const fpSecBtn = document.getElementById('fpSecBtn');
-  const fpBack1 = document.getElementById('fpBack1');
-  const fpBack1b = document.getElementById('fpBack1b');
-  const fpVerifyOldBtn = document.getElementById('fpVerifyOldBtn');
-  const fpVerifySecBtn = document.getElementById('fpVerifySecBtn');
-  const fpBack2 = document.getElementById('fpBack2');
-  const fpUpdatePwBtn = document.getElementById('fpUpdatePwBtn');
-  const fpQuestionsContainer = document.getElementById('fpQuestionsContainer');
-  let fpMethod = null;
-
-  fpOldPwBtn.onclick = () => {
-    fpMethod = "old";
-    if(!fpIdNumber.value.trim()){
-      fpError1.textContent = "Please enter ID Number first.";
-      return;
-    }
-    fpError1.textContent = "";
-    fpStep1.classList.add('d-none');
-    fpStep2Old.classList.remove('d-none');
-  };
-
-  fpSecBtn.onclick = () => {
-    fpMethod = "forgot";
-    if(!fpIdNumber.value.trim()){
-      fpError1.textContent = "Please enter ID Number first.";
-      return;
-    }
-    fpError1.textContent = "";
-    fpStep1.classList.add('d-none');
-    fpStep2Sec.classList.remove('d-none');
-    fpQuestionsContainer.innerHTML = `
-      <div class="mb-3">
-        <label class="form-label">What was your first pet’s name?</label>
-        <input type="text" class="form-control fpSecAnswer" data-q="What was your first pet’s name?">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">What city were you born in?</label>
-        <input type="text" class="form-control fpSecAnswer" data-q="What city were you born in?">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">What was your childhood nickname?</label>
-        <input type="text" class="form-control fpSecAnswer" data-q="What was your childhood nickname?">
-      </div>`;
-  };
-
-  fpBack1.onclick = () => {
-    fpStep2Old.classList.add('d-none');
-    fpStep1.classList.remove('d-none');
-    fpOldPassword.value = "";
-    fpError2.textContent = "";
-  };
-
-  fpBack1b.onclick = () => {
-    fpStep2Sec.classList.add('d-none');
-    fpStep1.classList.remove('d-none');
-    fpQuestionsContainer.innerHTML = "";
-    fpErrorSec.textContent = "";
-  };
-
-  fpVerifyOldBtn.onclick = () => {
-    fpError2.textContent = "";
-    let pl = {
-      "id_number": fpIdNumber.value.trim(),
-      "old_password": fpOldPassword.value.trim(),
-      "new_password1": "",
-      "new_password2": ""
-    };
-
-    fetch("{% url 'accounts:public_forgot_password_view' %}", {
-      method: "POST",
-      headers: {'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/json'},
-      body: JSON.stringify(pl)
-    }).then(r => r.json()).then(data => {
-      if(data.ok){
-        fpStep2Old.classList.add('d-none');
-        fpStep3.classList.remove('d-none');
-      } else {
-        fpError2.textContent = data.errors.old_password ? data.errors.old_password.join(", ") : "Incorrect password.";
-      }
-    }).catch(() => { fpError2.textContent = "Server error. Please try again."; });
-  };
-
-  fpVerifySecBtn.onclick = () => {
-    fpErrorSec.textContent = "";
-    let answers = {};
-    document.querySelectorAll('.fpSecAnswer').forEach(el => {
-      answers[el.dataset.q] = el.value.trim();
-    });
-
-    answers["id_number"] = fpIdNumber.value.trim();
-    fetch("{% url 'accounts:public_verify_security_answers' %}", {
-      method: "POST",
-      headers: {'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/json'},
-      body: JSON.stringify(answers)
-    }).then(r => r.json()).then(d => {
-      if(d.valid){
-        fpStep2Sec.classList.add('d-none');
-        fpStep3.classList.remove('d-none');
-      } else {
-        fpErrorSec.textContent = "Security answers didn’t match. Please try again.";
-      }
-    }).catch(() => { fpErrorSec.textContent = "Server error. Please try again."; });
-  };
-
-  fpBack2.onclick = () => {
-    fpStep3.classList.add('d-none');
-    if(fpMethod === "old"){
-      fpStep2Old.classList.remove('d-none');
-    } else {
-      fpStep2Sec.classList.remove('d-none');
-    }
-    fpError3.textContent = "";
-  };
-
-  fpUpdatePwBtn.onclick = () => {
-    fpError3.textContent = "";
-    let pw1 = document.getElementById('fpNewPw1').value.trim();
-    let pw2 = document.getElementById('fpNewPw2').value.trim();
-    let payload = {
-      "id_number": fpIdNumber.value.trim(),
-      "new_password1": pw1,
-      "new_password2": pw2
-    };
-
-    if(fpMethod === "old"){
-      payload["old_password"] = fpOldPassword.value.trim();
-    } else {
-      payload["verify"] = "1";
-    }
-    fetch("{% url 'accounts:public_forgot_password_view' %}", {
-      method: "POST",
-      headers: {'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    }).then(r => r.json()).then(data => {
-      if(data.ok){
-        alert("Password updated successfully!");
-        location.reload();
-      } else {
-        let err = "";
-        for(let f in data.errors){
-          err += f+": "+data.errors[f].join(", ")+"\n";
-        }
-        fpError3.textContent = err || "Error updating password.";
-      }
-    }).catch(() => { fpError3.textContent = "Server error updating password."; });
-  };
-
-});
-
-</script>
+<script src="{% static 'js/login.js' %}"></script>
 {% endblock %}
 
 // File: templates/main_menu.html
@@ -1877,5 +1845,122 @@ fetch('https://api.quotable.io/random')
     </p>
   </div>
 </div>
+{% endblock %}
+
+// File: templates/track_habits/track_habit_detail.html
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container">
+    <h2>Track Habit: {{ habit.name }}</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">View Streaks</h5>
+                    <p class="card-text">Current Streak: {{ streak }} days</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">View Points</h5>
+                    <p class="card-text">Total Points: {{ total_points }}</p>
+                    {% if badge %}
+                        <p class="card-text">Badge Earned: {{ badge }}</p>
+                    {% else %}
+                        <p class="card-text">No Badge Earned Yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Challenges</h5>
+                    <p class="card-text">Days Remaining: {{ days_remaining }}</p>
+                    <p class="card-text">Next Badge: 
+                        {% if total_points < 75 %}
+                            Silver (75 pts)
+                        {% elif total_points < 150 %}
+                            Gold (150 pts)
+                        {% else %}
+                            Platinum (Achieved)
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">View Insights</h5>
+                    <canvas id="habitChart"></canvas>
+                    <p>Committed Days: {{ committed_days }}</p>
+                    <p>Days of Commitment Yet to Come: {{ days_remaining }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Update Reminders</h5>
+                    <form method="post" action="{% url 'habits:track_habit_detail' habit.id %}">
+                        {% csrf_token %}
+                        <select name="reminder_frequency" class="form-control">
+                            <option value="daily" {% if habit.motivational_reminder == 'daily' %}selected{% endif %}>Daily</option>
+                            <option value="weekly" {% if habit.motivational_reminder == 'weekly' %}selected{% endif %}>Weekly</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary mt-2">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Update Goal</h5>
+                    <form method="post" action="{% url 'habits:track_habit_detail' habit.id %}">
+                        {% csrf_token %}
+                        <select name="timeline" class="form-control">
+                            <option value="1" {% if habit.timeline == '1' %}selected{% endif %}>1 Month</option>
+                            <option value="2" {% if habit.timeline == '2' %}selected{% endif %}>2 Months</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary mt-2">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var ctx = document.getElementById('habitChart').getContext('2d');
+    var habitChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [{% for record in habit_records %}"{{ record.date }}",{% endfor %}],
+            datasets: [{
+                label: 'Progress',
+                data: [{% for record in habit_records %}{{ record.data|length }},{% endfor %}],
+                borderColor: 'blue',
+                borderWidth: 2,
+                fill: false
+            }]
+        }
+    });
+});
+</script>
 {% endblock %}
 
