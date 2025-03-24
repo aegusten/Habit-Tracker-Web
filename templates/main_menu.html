@@ -2,7 +2,6 @@
 {% block content %}
 <div class="dashboard-container">
   <h1 class="dashboard-title">Dashboard</h1>
-
   <div class="row gx-4 gy-4">
     <div class="col-lg-4">
       <div class="card action-card">
@@ -14,19 +13,17 @@
         </div>
       </div>
     </div>
-
     <div class="col-lg-4">
       <div class="card info-card">
         <img src="/static/images/insights.jpg" class="card-img-top" alt="Insights">
         <div class="card-body">
           <h3 class="card-title">Insights</h3>
           <p class="card-text">
-            Monitor your streaks, points, and progress over time. Explore interactive charts and graphs that visualize your habit journey. Stay informed on your daily and weekly achievements to keep motivated.
+            Monitor your streaks, points, and progress over time. Explore interactive charts and graphs that visualize your habit journey.
           </p>
         </div>
       </div>
     </div>
-
     <div class="col-lg-4">
       <div class="card info-card">
         <img src="/static/images/habit-news.jpg" class="card-img-top" alt="Habit News">
@@ -39,7 +36,6 @@
       </div>
     </div>
   </div>
-
   <div class="row gx-4 gy-4 mt-4">
     <div class="col-lg-6">
       <div class="card info-card">
@@ -47,7 +43,7 @@
         <div class="card-body">
           <h3 class="card-title">Daily Motivation</h3>
           <p class="card-text">
-            Kickstart your day with a burst of inspiration. Let today’s motivational quote keep you on track towards your goals.
+            Kickstart your day with a burst of inspiration. Let today’s motivational quote keep you on track.
           </p>
           <blockquote class="blockquote">
             <p id="daily-quote">"Loading motivational quote..."</p>
@@ -55,14 +51,13 @@
         </div>
       </div>
     </div>
-
     <div class="col-lg-6">
       <div class="card info-card">
         <img src="/static/images/achievements.jpg" class="card-img-top" alt="Achievements">
         <div class="card-body">
           <h3 class="card-title">Achievements</h3>
           <p class="card-text">
-            Celebrate your progress with badges and points. Track your journey to achieving Silver, Gold, or Platinum status and earn the title "Committed to goal".
+            Celebrate your progress with badges and points. Track your journey to achieving Silver, Gold, or Platinum status.
           </p>
           <a href="{% url 'habits:ongoing_habit' %}" class="btn btn-primary">View Achievements</a>
         </div>
@@ -70,25 +65,23 @@
     </div>
   </div>
 </div>
-
 <script>
 fetch('https://api.sampleapis.com/futurama/quotes')
-  .then(response => response.json())
-  .then(data => {
-    document.getElementById('news-list').innerHTML =
-      data.slice(0, 3).map(q => `<li>• ${q.quote}</li>`).join('');
+  .then(r => r.json())
+  .then(d => {
+    const e = document.getElementById('news-list')
+    e.innerHTML = d.slice(0,3).map(q => '<li>• ' + q.quote + '</li>').join('')
   })
   .catch(() => {
-    document.getElementById('news-list').innerHTML = '<li>Unable to load news.</li>';
-  });
-
+    document.getElementById('news-list').innerHTML = '<li>Unable to load news.</li>'
+  })
 fetch('https://api.quotable.io/random')
-  .then(response => response.json())
-  .then(data => {
-    document.getElementById('daily-quote').textContent = `"${data.content}" — ${data.author}`;
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('daily-quote').textContent = '"' + d.content + '" — ' + d.author
   })
   .catch(() => {
-    document.getElementById('daily-quote').textContent = 'Stay motivated and keep pushing forward!';
-  });
+    document.getElementById('daily-quote').textContent = 'Stay motivated and keep pushing forward!'
+  })
 </script>
 {% endblock %}

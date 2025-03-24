@@ -35,12 +35,11 @@ class Habit(models.Model):
 class HabitRecord(models.Model):
     habit = models.ForeignKey(Habit, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
-    data = models.JSONField()                
+    data = models.JSONField()
 
     class Meta:
         unique_together = ('habit','date')
-        
-        
+
 def update_streak(self):
     records = HabitRecord.objects.filter(habit=self).order_by('-date')
     streak = 0

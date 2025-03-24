@@ -4,10 +4,11 @@ from .models import Habit
 class HabitForm(forms.ModelForm):
     class Meta:
         model = Habit
-        fields = ['name','timeline','motivational_reminder','insights_method']
+        fields = ['name', 'timeline', 'motivational_reminder', 'insights_method']
 
 class HabitRecordForm(forms.Form):
     def __init__(self, *args, metrics=None, **kwargs):
         super().__init__(*args, **kwargs)
-        for key in metrics.keys():
-            self.fields[key] = forms.FloatField(required=False, label=key.replace('_',' ').title())
+        if metrics:
+            for key, val in metrics.items():
+                self.fields[key] = forms.CharField(required=False, label=key.replace('_',' ').title())
