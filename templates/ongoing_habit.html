@@ -1,26 +1,57 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container my-4">
-  <h2 class="text-center fw-bold mb-4">Ongoing Habits</h2>
+  <h2 class="ongoing-title mb-4">Ongoing Habits</h2>
   {% if habits %}
-    <div class="row row-cols-1 row-cols-md-2 g-3">
+    <div class="row justify-content-center g-4">
       {% for habit in habits %}
-        <div class="col">
-          <div class="card border-primary shadow-sm h-100">
-            <div class="card-body">
+        <div class="col-12 col-md-6 col-xl-4">
+          <div class="card card-ongoing h-100">
+            <div class="card-body d-flex flex-column">
               <h5 class="card-title">{{ habit.name }}</h5>
-              <p class="card-text mb-1">Created: {{ habit.created_at|date:"Y-m-d" }}</p>
-              <p class="card-text mb-1">Timeline: {{ habit.get_timeline_display }}</p>
-              <p class="card-text mb-1">Reminder: {{ habit.get_motivational_reminder_display }}</p>
-              <p class="card-text mb-1">Streak: {{ habit.streak }}</p>
-              <p class="card-text mb-1">Points: {{ habit.points }}</p>
+              <p class="card-text mb-2">
+                <i class="bi bi-calendar3 me-1"></i> Created: {{ habit.created_at|date:"Y-m-d" }}
+              </p>
+              <p class="card-text mb-2">
+                <i class="bi bi-hourglass-split me-1"></i> Timeline: {{ habit.get_timeline_display }}
+              </p>
+              <p class="card-text mb-2">
+                <i class="bi bi-bell me-1"></i> Reminder: {{ habit.get_motivational_reminder_display }}
+              </p>
+
+              <!-- Add a paragraph to show the habit type -->
+              <p class="card-text mb-2">
+                <strong>Type:</strong>
+                {% if habit.template_key == "stop_smoking" %}
+                  Stop Smoking
+                {% elif habit.template_key == "wake_up_early" %}
+                  Wake Up Early
+                {% elif habit.template_key == "eat_healthy" %}
+                  Eat Healthy
+                {% elif habit.template_key == "custom" %}
+                  Custom
+                {% else %}
+                  Unknown
+                {% endif %}
+              </p>
+
+              <p class="card-text mb-2">
+                <i class="bi bi-fire me-1"></i> Streak: {{ habit.streak }}
+              </p>
+              <p class="card-text mb-2">
+                <i class="bi bi-star me-1"></i> Points: {{ habit.points }}
+              </p>
             </div>
-            <div class="card-footer bg-transparent">
-              <div class="d-flex justify-content-between">
-                <a href="{% url 'habits:track_habit_detail' habit.id %}" class="btn btn-sm btn-primary">Track Habit</a>
-                <a href="{% url 'habits:abort_process' habit.id %}" class="btn btn-sm btn-danger">Abort</a>
-                <a href="{% url 'habits:insert_data' habit.id %}" class="btn btn-sm btn-success">Insert Data</a>
-              </div>
+            <div class="card-footer d-flex gap-2 justify-content-center">
+              <a href="{% url 'habits:track_habit_detail' habit.id %}" class="btn btn-sm btn-primary btn-larger">
+                <i class="bi bi-arrow-repeat me-1"></i> Track
+              </a>
+              <a href="{% url 'habits:abort_process' habit.id %}" class="btn btn-sm btn-danger btn-larger">
+                <i class="bi bi-x-circle me-1"></i> Abort
+              </a>
+              <a href="{% url 'habits:insert_data' habit.id %}" class="btn btn-sm btn-success btn-larger">
+                <i class="bi bi-pencil-square me-1"></i> Insert
+              </a>
             </div>
           </div>
         </div>
@@ -31,10 +62,5 @@
       <p>No habits found. <a href="{% url 'habits:form_new_habit' %}">Create one?</a></p>
     </div>
   {% endif %}
-  <div class="mt-4 text-center">
-    <a href="{% url 'accounts:main_menu' %}" class="btn btn-secondary px-2 py-2 rounded-3 shadow-sm">
-      <i class="bi bi-arrow-left-circle me-2"></i> Back to Main Menu
-    </a>
-  </div>
 </div>
 {% endblock %}

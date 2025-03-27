@@ -167,7 +167,7 @@ def edit_personal_info_view(request):
     questions = {ua.question_text: ua.answer for ua in user_answers}
     if request.method == 'POST' and form.is_valid():
         form.save()
-        return redirect('accounts:main_menu')
+        return redirect('accounts:edit_personal_info')
     context = {
         'form': form,
         'password_form': password_form,

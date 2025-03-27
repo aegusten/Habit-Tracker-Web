@@ -1,71 +1,112 @@
 {% load crispy_forms_tags %}
-<form id="habit-form" method="post" class="d-none">
+<form id="habit-form" method="post" class="{% if not template %}d-none{% endif %}">
   {% csrf_token %}
   {{ form|crispy }}
-  <div id="stopSmokingFields" class="extra-fields d-none mt-4">
-    <h5>Additional Details for Stopping Smoking</h5>
-    <div class="mb-3">
-      <label class="form-label">Cigarettes per Day</label>
-      <input type="number" name="cigarettes_per_day" class="form-control" placeholder="e.g., 20">
+
+  {% if template == 'stop_smoking' %}
+    <div class="extra-fields mt-4">
+      <h5>Additional Details for Stopping Smoking</h5>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="cigarettes_per_day" class="form-label">Cigarettes per Day</label>
+          <input type="number" name="cigarettes_per_day" id="cigarettes_per_day" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="craving_level" class="form-label">Craving Level (1-10)</label>
+          <input type="number" name="craving_level" id="craving_level" class="form-control" min="1" max="10" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="planned_quit_date" class="form-label">Planned Quit Date</label>
+          <input type="date" name="planned_quit_date" id="planned_quit_date" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="nicotine_replacement" class="form-label">Nicotine Replacement</label>
+          <input type="text" name="nicotine_replacement" id="nicotine_replacement" class="form-control" />
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="trigger_coping" class="form-label">Triggers &amp; Coping Strategies</label>
+        <input type="text" name="trigger_coping" id="trigger_coping" class="form-control" />
+      </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label">Craving Level (1-10)</label>
-      <input type="number" name="craving_level" class="form-control" min="1" max="10" placeholder="e.g., 5">
+  {% elif template == 'wake_up_early' %}
+    <div class="extra-fields mt-4">
+      <h5>Additional Details for Waking Up Early</h5>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label for="current_wake_time" class="form-label">Current Wake Time</label>
+          <input type="time" name="current_wake_time" class="form-control" />
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="desired_wake_time" class="form-label">Desired Wake Time</label>
+          <input type="time" name="desired_wake_time" class="form-control" />
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="bedtime" class="form-label">Bedtime</label>
+          <input type="time" name="bedtime" class="form-control" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="sleep_quality" class="form-label">Sleep Quality (1-10)</label>
+          <input type="number" name="sleep_quality" min="1" max="10" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="snooze_count" class="form-label">Number of Snoozes</label>
+          <input type="number" name="snooze_count" min="0" class="form-control" />
+        </div>
+      </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label">Planned Quit Date</label>
-      <input type="date" name="planned_quit_date" class="form-control">
+  {% elif template == 'eat_healthy' %}
+    <div class="extra-fields mt-4">
+      <h5>Additional Details for Eating Healthy</h5>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="daily_calorie_target" class="form-label">Daily Calorie Target</label>
+          <input type="number" name="daily_calorie_target" min="0" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="fruit_veg_target" class="form-label">Fruit &amp; Veg Servings</label>
+          <input type="number" name="fruit_veg_target" min="0" class="form-control" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="water_intake_goal" class="form-label">Water Intake (glasses/day)</label>
+          <input type="number" name="water_intake_goal" min="0" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="junk_food_consumption" class="form-label">Junk Food Consumption</label>
+          <input type="number" name="junk_food_consumption" min="0" class="form-control" />
+        </div>
+      </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label">Nicotine Replacement Method</label>
-      <input type="text" name="nicotine_replacement" class="form-control" placeholder="e.g., Gum">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Triggers & Coping Strategies</label>
-      <textarea name="trigger_coping" class="form-control" rows="3" placeholder="Describe triggers & coping methods"></textarea>
-    </div>
+  {% endif %}
+
+  <div class="mt-4">
+    <h5>Add Custom Fields (optional)</h5>
+    <div id="customFieldsContainer"></div>
+    <button type="button" class="btn btn-primary" id="addCustomField">Add Field</button>
   </div>
-  <div id="wakeUpEarlyFields" class="extra-fields d-none mt-4">
-    <h5>Additional Details for Waking Up Early</h5>
-    <div class="mb-3">
-      <label class="form-label">Current Wake Time</label>
-      <input type="time" name="current_wake_time" class="form-control">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Desired Wake Time</label>
-      <input type="time" name="desired_wake_time" class="form-control">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Bedtime</label>
-      <input type="time" name="bedtime" class="form-control">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Sleep Quality (1-10)</label>
-      <input type="number" name="sleep_quality" class="form-control" min="1" max="10" placeholder="Rate your sleep quality">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Number of Snoozes</label>
-      <input type="number" name="snooze_count" class="form-control" placeholder="e.g., 2">
-    </div>
+
+  <div class="mt-4">
+    <h5>How This System Works</h5>
+    <p>
+      By creating a new habit, you'll earn points each day you stick to it.
+      If you meet your goals (e.g. 5 days in a row),
+      you'll unlock achievements. This gamification approach keeps you motivated.
+    </p>
   </div>
-  <div id="eatHealthyFields" class="extra-fields d-none mt-4">
-    <h5>Additional Details for Eating Healthy</h5>
-    <div class="mb-3">
-      <label class="form-label">Daily Calorie Target</label>
-      <input type="number" name="daily_calorie_target" class="form-control" placeholder="e.g., 2000">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Fruit & Vegetable Servings</label>
-      <input type="number" name="fruit_veg_target" class="form-control" placeholder="e.g., 5">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Water Intake (glasses/day)</label>
-      <input type="number" name="water_intake_goal" class="form-control" placeholder="e.g., 8">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Junk Food Consumption (optional)</label>
-      <input type="number" name="junk_food_consumption" class="form-control" placeholder="e.g., cheat meals per week">
-    </div>
-  </div>
-  <button id="confirmPresetBtn" type="submit" class="btn btn-success w-100 mt-3 d-none">Confirm (Preset)</button>
+
+  <button id="confirmPresetBtn" type="submit" class="btn btn-success w-100 mt-3">
+    Confirm
+  </button>
 </form>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('habit-form');
+  if ("{{ template }}") form.classList.remove('d-none');
+});
+</script>

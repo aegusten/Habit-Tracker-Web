@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
-{% load static %}
-
 {% block content %}
   {% include 'habits_templates/habit_main.html' %}
-  {% include 'habits_templates/habit_form_prepared.html' %}
-  {% include 'habits_templates/habit_form_custom.html' %}
+  {% if template and template != 'custom' %}
+    {% include 'habits_templates/habit_form_prepared.html' %}
+  {% elif template == 'custom' %}
+    {% include 'habits_templates/habit_form_custom.html' %}
+  {% endif %}
 {% endblock %}

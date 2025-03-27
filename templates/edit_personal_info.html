@@ -1,31 +1,32 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
-
-{% block content %}
-
 {% load static %}
 
+{% block content %}
 <div class="edit-info-container">
   <h2 class="text-center mb-4">Edit Personal Info</h2>
-  <div class="card shadow-sm mx-auto info-card p-4">
+  <div class="card mx-auto info-card p-4">
     <form method="post">
       {% csrf_token %}
-      {{ form.phone_number|as_crispy_field }}
-      {{ form.age|as_crispy_field }}
+      <div class="mb-3">{{ form.phone_number|as_crispy_field }}</div>
+      <div class="mb-3">{{ form.age|as_crispy_field }}</div>
       <div class="d-flex justify-content-between mt-4">
-        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save me-1"></i> Save Changes
+        </button>
         <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePassModal">
-          Change Password
+          <i class="bi bi-key-fill me-1"></i> Change Password
         </button>
       </div>
     </form>
   </div>
 </div>
-<div class="modal fade" id="changePassModal" tabindex="-1">
+
+<div class="modal fade" id="changePassModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content bg-card" style="border-radius:1rem;">
+    <div class="modal-content">
       <div class="modal-header border-0">
-        <h5 class="modal-title">Change Password</h5>
+        <h5 class="modal-title mx-auto">Change Password</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="px-4 pt-1">
@@ -33,7 +34,7 @@
           <div id="wizardProgress" class="progress-bar bg-success" role="progressbar" style="width: 33%;"></div>
         </div>
       </div>
-      <div class="modal-body">
+      <div class="modal-body px-4">
         <div id="step1">
           <p class="fw-bold mb-3">How do you want to change your password?</p>
           <div class="list-group">
@@ -52,8 +53,12 @@
           <input type="password" class="form-control mb-3" id="oldPassword" placeholder="Current password">
           <div class="text-danger small" id="oldPwError"></div>
           <div class="d-flex justify-content-between mt-4">
-            <button type="button" class="btn btn-secondary" id="backToStep1">Back</button>
-            <button type="button" class="btn btn-primary" id="verifyOldBtn">Next</button>
+            <button type="button" class="btn btn-secondary" id="backToStep1">
+              <i class="bi bi-arrow-left me-1"></i> Back
+            </button>
+            <button type="button" class="btn btn-primary" id="verifyOldBtn">
+              Next <i class="bi bi-arrow-right"></i>
+            </button>
           </div>
         </div>
         <div id="step2Sec" class="d-none">
@@ -68,8 +73,12 @@
           </div>
           <div class="text-danger small" id="secError"></div>
           <div class="d-flex justify-content-between mt-4">
-            <button type="button" class="btn btn-secondary" id="backToStep1b">Back</button>
-            <button type="button" class="btn btn-primary" id="verifySecBtn">Next</button>
+            <button type="button" class="btn btn-secondary" id="backToStep1b">
+              <i class="bi bi-arrow-left me-1"></i> Back
+            </button>
+            <button type="button" class="btn btn-primary" id="verifySecBtn">
+              Next <i class="bi bi-arrow-right"></i>
+            </button>
           </div>
         </div>
         <div id="step3" class="d-none">
@@ -86,8 +95,12 @@
             {{ set_password_form.new_password2.label_tag }}
             {{ set_password_form.new_password2 }}
             <div class="d-flex justify-content-between mt-4">
-              <button type="button" class="btn btn-secondary" id="backStep3">Back</button>
-              <button type="button" class="btn btn-success" id="btnUpdatePw">Update Password</button>
+              <button type="button" class="btn btn-secondary" id="backStep3">
+                <i class="bi bi-arrow-left me-1"></i> Back
+              </button>
+              <button type="button" class="btn btn-success" id="btnUpdatePw">
+                <i class="bi bi-check-circle me-1"></i> Update Password
+              </button>
             </div>
           </form>
         </div>

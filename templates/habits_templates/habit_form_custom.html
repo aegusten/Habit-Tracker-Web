@@ -1,15 +1,23 @@
-<div id="customFieldsSection" class="extra-fields d-none mt-4">
-  <h5>Custom Fields</h5>
-  <p class="text-muted small">
-    Add your own metrics to track. For example, “Snooze Presses” or “Water at Bedtime.” Select a field type to control how data is tracked.
-  </p>
-  <div id="customFieldsContainer"></div>
-  <button type="button" id="addCustomField" class="btn btn-outline-primary btn-sm mt-2">Add Custom Field</button>
-</div>
-<div id="guidelines-section" class="mt-5 d-none">
-  <h5>User Guidelines & Gamification</h5>
-  <p class="mb-4">
-    The system will track your progress and award points for daily achievements, which help unlock badges. This gamification approach is designed to keep you motivated and engaged with your habit.
-  </p>
-</div>
-<button id="confirmCustomBtn" type="submit" class="btn btn-success w-100 mt-3 d-none">Confirm (Custom)</button>
+{% if template == "custom" %}
+{% load crispy_forms_tags %}
+<form id="habit-form" method="post">
+  {% csrf_token %}
+  {{ form|crispy }}
+  <div id="customFieldsSection" class="mt-3">
+    <h5>Add Custom Fields</h5>
+    <div id="customFieldsContainer"></div>
+    <button type="button" class="btn btn-primary" id="addCustomField">Add Field</button>
+  </div>
+  <div class="mt-4">
+    <h5>How This System Works</h5>
+    <p>
+      By creating a new habit, you’ll get daily or weekly reminders
+      and earn points for consistent progress. Once you hit certain
+      milestones, achievements will appear in your profile.
+    </p>
+  </div>
+  <button type="submit" class="btn btn-success w-100 mt-3">
+    Confirm
+  </button>
+</form>
+{% endif %}

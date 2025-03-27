@@ -1,25 +1,17 @@
-{% load crispy_forms_tags %}
-{% load static %}
-
-<div class="text-center mb-5">
-  <h2>Create a New Habit</h2>
-  <p>Select a ready-made template or build your own:</p>
-  <div class="row row-cols-1 row-cols-md-4 g-4 mb-4">
+{% block content %}
+<div class="container py-4">
+  <h2 class="text-center mb-4">Create a New Habit</h2>
+  <div class="row row-cols-1 row-cols-md-4 g-4">
     {% for tpl in templates %}
       <div class="col">
         <div class="card template-card text-center" data-template="{{ tpl.key }}">
           <div class="card-body">
-            {% if tpl.key == 'stop_smoking' %}
-              <i class="bi bi-x-circle display-4 mb-3"></i>
-            {% elif tpl.key == 'eat_healthy' %}
-              <i class="bi bi-nut display-4 mb-3"></i>
-            {% else %}
-              <i class="bi {{ tpl.icon }} display-4 mb-3"></i>
-            {% endif %}
-            <h5 class="card-title">{{ tpl.label }}</h5>
+            <i class="bi {{ tpl.icon }} display-4 mb-2"></i>
+            <h5>{{ tpl.label }}</h5>
           </div>
         </div>
       </div>
     {% endfor %}
   </div>
 </div>
+{% endblock %}
