@@ -1,11 +1,32 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
-from django.contrib.auth import update_session_auth_hash
-from django.http import JsonResponse
-from .models import UserSecurityAnswer, SecurityQuestion, User
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+
+from django.http import JsonResponse
+from habits.models import Habit
+from django.contrib import messages
+
+from django.contrib.auth.forms import (
+    PasswordChangeForm,
+    SetPasswordForm,
+)
+
+from .models import (
+    UserSecurityAnswer,
+    SecurityQuestion,
+    User,
+)
+
+from habits.utils import (
+    PRESET_HABITS,
+    PRESET_TEMPLATES,
+    AWARD_MESSAGES,
+    NOTIFICATION_MESSAGES,
+    get_notification_message,
+    get_random_reminder
+)
 
 import json
 from .forms import RegisterForm, LoginForm, UpdatePersonalInfoForm
@@ -15,12 +36,40 @@ def index_view(request):
 
 @login_required
 def main_menu_view(request):
-    return render(request, 'main_menu.html')
+    user = request.user
+    habits = Habit.objects.filter(user=user)
+
+    habit_summary = {
+        'daily': [],
+        'weekly': []
+    }
+
+    for habit in habits:
+        habit_type = habit.template_key or 'custom'
+        reminder = habit.motivational_reminder
+        print(f"[DEBUG] Habit: {habit.name}, Type: {habit_type}, Reminder: {reminder}")
+
+        if reminder == 'daily':
+            habit_summary['daily'].append(habit_type)
+        elif reminder == 'weekly':
+            habit_summary['weekly'].append(habit_type)
+
+    habit_summary['daily'] = list(set(habit_summary['daily']))
+    habit_summary['weekly'] = list(set(habit_summary['weekly']))
+
+    print(f"[SUMMARY] Total Habits: {habits.count()}")
+    print(f"[SUMMARY] Daily Types: {habit_summary['daily']}")
+    print(f"[SUMMARY] Weekly Types: {habit_summary['weekly']}")
+
+    return render(request, 'main_menu.html', {
+        'daily_habit_types': habit_summary['daily'],
+        'weekly_habit_types': habit_summary['weekly'],
+        'habit_count': habits.count(),
+    })
 
 def logout_view(request):
     logout(request)
     return redirect('accounts:login')
-
 
 def register_view(request):
     if request.method == 'POST':
@@ -167,7 +216,7 @@ def edit_personal_info_view(request):
     questions = {ua.question_text: ua.answer for ua in user_answers}
     if request.method == 'POST' and form.is_valid():
         form.save()
-        return redirect('accounts:main_menu')
+        return redirect('accounts:edit_personal_info')
     context = {
         'form': form,
         'password_form': password_form,

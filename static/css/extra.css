@@ -1,0 +1,411 @@
+/* Theme Variables */
+:root {
+  --body-bg: #f0f2f5;
+  --text-color: #212529;
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #212529;
+  --sidebar-active-bg: #e9ecef;
+}
+
+[data-theme="dark"] {
+  --body-bg: #000000;
+  --text-color: #f1f1f1;
+
+  --sidebar-bg: #1d1d1d;
+  --sidebar-text: #f1f1f1;
+  --sidebar-active-bg: #333333;
+
+  --card-bg: #1f1f1f;       
+  --card-border: #444444;   
+  --input-bg: #2b2b2b;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: var(--body-bg);
+}
+
+
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--sidebar-bg);
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--body-bg);
+  margin-right: 280px;
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* Sidebar */
+.sidebar {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 100vh;
+  padding: 2rem 1rem;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+/* Username styling */
+.user-name {
+  font-weight: 600;
+  color: var(--sidebar-text);
+  font-size: 1.3rem;
+}
+
+/* Sidebar nav */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  margin-top: 3rem;
+}
+
+.sidebar-link {
+  font-size: 1.3rem;
+  display: block;
+  padding: 0.8rem 1rem;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  border-radius: 0.3rem;
+  transition: background-color 0.2s ease;
+}
+
+
+.sidebar-link:hover {
+  background-color: var(--sidebar-active-bg);
+  text-decoration: none;
+}
+
+.sidebar-link.active {
+  background-color: var(--sidebar-active-bg);
+  font-weight: 600;
+}
+
+/* create habit template */
+.template-card {
+  cursor: pointer;
+}
+
+
+/* Profile image (if used) */
+.profile-pic {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* Logout link */
+.logout-link {
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 1.1rem;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.3rem;
+  color: var(--sidebar-text);
+}
+.theme-toggle i {
+  font-size: 1.3rem;
+}
+
+/* Tab switcher */
+.tab-switcher {
+  border-bottom: 1px solid #ccc;
+}
+.tab-link {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+.tab-link.active {
+  font-weight: 600;
+  border-bottom: 3px solid var(--text-color);
+}
+.tab-link:hover {
+  opacity: 0.8;
+}
+
+/* Feature cards */
+.feature-card {
+  border-radius: 0.5rem;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+.feature-card.fruits {
+  background: linear-gradient(135deg, #34c759, #70d47b);
+}
+.feature-card.track {
+  background: linear-gradient(135deg, #4d8bf5, #6fb3ff);
+}
+.feature-card.portions {
+  background: linear-gradient(135deg, #f6a623, #f8cf61);
+}
+.feature-card.philosophy {
+  background: linear-gradient(135deg, #845ef7, #b18aff);
+}
+.feature-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+.feature-text {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+.card-icon {
+  font-size: 1.5rem;
+}
+
+/* Notifications area */
+.notifications-container {
+  text-align: center;
+  padding: 1rem;
+}
+.notifications-section {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.notifications-title {
+  font-weight: 600;
+}
+.notifications-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: inline-block;
+  text-align: left;
+}
+.notifications-list li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.notifications-list i {
+  color: #ffc107;
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+}
+
+/* Footer */
+.footer {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  text-align: center;
+  padding: 1rem;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* ONGOING */
+.ongoing-title {
+  color: var(--text-color);
+  font-size: 1.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.card-ongoing {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(85, 84, 84, 0.2);
+}
+
+.card-ongoing .card-footer {
+  background-color: var(--card-bg);
+  border-top: 1px solid var(--card-border);
+}
+
+.card-ongoing .card-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.card-ongoing .card-text {
+  font-size: 1.05rem;
+}
+
+.btn-larger {
+  font-size: 1rem; 
+  padding: 0.5rem 1rem; 
+  white-space: nowrap;
+}
+
+/* Personal Details Page Styles */
+.edit-info-container {
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.info-card {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--card-border);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.info-card h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.info-card .form-control {
+  font-size: 1.1rem;
+  padding: 0.75rem;
+  background-color: var(--input-bg, #fff);
+  color: var(--text-color);
+  border: 1px solid var(--card-border);
+}
+
+.info-card .btn {
+  font-size: 1.1rem;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.3rem;
+}
+
+/* Dark‑mode overrides for Edit Personal Info */
+[data-theme="dark"] .info-card {
+  background-color: #fff !important;
+  color: #212529 !important;
+}
+
+[data-theme="dark"] .info-card .form-control {
+  background-color: #fff !important;
+  color: #212529 !important;
+}
+
+[data-theme="dark"] .info-card .btn-outline-secondary {
+  background-color: #fff !important;
+  border-color: #fff !important;
+  color: #212529 !important;
+}
+
+[data-theme="dark"] .info-card .btn-outline-secondary:hover {
+  background-color: #f0f0f0 !important;
+}
+
+[data-theme="dark"] .edit-info-container h2 {
+  color: #fff !important;
+}
+
+/* Modal background in dark mode */
+[data-theme="dark"] .modal-content {
+  background-color: #fff !important;
+  color: #ffffff !important;
+}
+
+
+
+/* Center the modal vertically & horizontally */
+.modal-dialog {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+}
+
+
+.modal-content {
+  background-color: #fff !important;
+  color: var(--text-color) !important;
+}
+[data-theme="dark"] .modal-content {
+  background-color: var(--sidebar-bg) !important;
+  color: var(--text-color) !important;
+}
+
+/* Close button visible in dark mode */
+.modal-header .btn-close {
+  filter: none;
+}
+[data-theme="dark"] .modal-header .btn-close {
+  filter: invert(1);
+}
+
+
+[data-theme="dark"] .modal-backdrop {
+  background-color: #111 !important;
+  opacity: 0.6 !important;
+}
+
+[data-theme="dark"] .modal-content {
+  background-color: #2b2b2b !important;
+  color: #f8f9fa !important;
+  border: 1px solid #444 !important;
+}
+
+[data-theme="dark"] .modal-header .btn-close {
+  filter: invert(1) !important;
+}
+
+[data-theme="dark"] .table.table-sm {
+  background-color: transparent !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .table.table-sm th,
+[data-theme="dark"] .table.table-sm td {
+  border-color: #666 !important;
+}
+
+
+[data-theme="dark"] .card {
+  background-color: #1f1f1f !important;
+  color: #f2f2f2 !important;
+  border: none;
+}
+[data-theme="dark"] .bg-light {
+  background-color: #333 !important;
+  color: #fff !important;
+}
+[data-theme="dark"] .form-label {
+  color: #fff !important;
+}
+.template-card {
+  min-height: 150px;
+}
+[data-theme="dark"] .template-card {
+  background-color: #444 !important;
+  color: #fff !important;
+}

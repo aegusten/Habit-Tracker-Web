@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4" 
+     style="background-color: var(--body-bg); color: var(--text-color); max-width: 1200px; border-radius: 0.5rem;">
+
+  <!-- Title -->
+  <div class="text-center mb-4">
+    <h2 class="fw-bold mb-1" style="color: var(--text-color);">Insert Data</h2>
+    <p class="mb-0" style="color: var(--text-color);">
+      Habit: <span class="fw-semibold">{{ habit.name }}</span>
+    </p>
+  </div>
+  <hr class="mb-4" style="border-color: var(--text-color); opacity: 0.4;">
+
+  <!-- If Habit Achieved -->
+  {% if habit.achieved %}
+  <div class="card mb-4 border-0 shadow-sm" 
+       style="background-color: var(--card-bg); color: var(--text-color);">
+    <div class="card-header bg-success text-white border-0">
+      <h5 class="mb-0">Habit Achieved</h5>
+    </div>
+    <div class="card-body">
+      <p class="fw-bold text-primary">Congratulations! You completed this habit successfully.</p>
+      <p class="text-muted">You no longer need to log data for this habit. Enjoy your achievement!</p>
+    </div>
+  </div>
+
+  {% else %}
+    {% if static_display_fields %}
+    <!-- Two-column layout if static_display_fields exist -->
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+      <!-- Left Column: Habit Info -->
+      <div class="col">
+        <div class="card border-0 shadow-sm h-100"
+             style="background-color: var(--card-bg); color: var(--text-color);">
+          <div class="card-header bg-info text-white border-0">
+            <h5 class="mb-0">Habit Info</h5>
+          </div>
+          <div class="card-body">
+            {% for field_name, info in static_display_fields %}
+            <p class="mb-2">
+              <strong>{{ info.label }}:</strong> 
+              <span class="ms-2 text-muted">{{ info.default|default:"-" }}</span>
+            </p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Daily Entry -->
+      <div class="col">
+        <div class="card border-0 shadow-sm h-100"
+             style="background-color: var(--card-bg); color: var(--text-color);">
+          <div class="card-header bg-success text-white border-0">
+            <h5 class="mb-0">
+              Daily Data Entry ({{ next_date|date:"F d, Y" }})
+            </h5>
+          </div>
+          <div class="card-body">
+            <form method="POST">
+              {% csrf_token %}
+              {% if habit.template_key == "custom" %}
+                <h6 class="fw-semibold mb-3">Please fill the fields</h6>
+              {% else %}
+                {% if preset_fields %}
+                  <h6 class="fw-semibold mb-3">Habit-Specific Fields</h6>
+                {% endif %}
+              {% endif %}
+              
+              <!-- Preset Fields -->
+              {% for field_name, info in preset_fields %}
+              <div class="mb-3">
+                <label class="form-label fw-semibold">{{ info.label }} ({{ info.type }})</label>
+                {% include 'track_habits/field_input.html' %}
+              </div>
+              {% endfor %}
+
+              <!-- Custom Fields -->
+              {% if habit.template_key != "custom" and custom_fields %}
+                <h6 class="fw-semibold mt-4 mb-3">Custom Fields</h6>
+              {% endif %}
+              {% for field_name, info in custom_fields %}
+              <div class="mb-3">
+                <label class="form-label fw-semibold">{{ info.label }} ({{ info.type }})</label>
+                {% include 'track_habits/field_input.html' %}
+              </div>
+              {% endfor %}
+              <button type="submit" class="btn btn-success w-100 fw-semibold">
+                Submit
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <!-- Single Card if no static_display_fields -->
+    <div class="card mb-4 border-0 shadow-sm"
+         style="background-color: var(--card-bg); color: var(--text-color);">
+      <div class="card-header bg-success text-white border-0">
+        <h5 class="mb-0">
+          Daily Data Entry ({{ next_date|date:"F d, Y" }})
+        </h5>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {% csrf_token %}
+          {% if habit.template_key == "custom" %}
+            <h6 class="fw-semibold mb-3">Please fill the fields</h6>
+          {% else %}
+            {% if preset_fields %}
+              <h6 class="fw-semibold mb-3">Habit-Specific Fields</h6>
+            {% endif %}
+          {% endif %}
+          
+          {% for field_name, info in preset_fields %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ info.label }} ({{ info.type }})</label>
+            {% include 'track_habits/field_input.html' %}
+          </div>
+          {% endfor %}
+          {% if habit.template_key != "custom" and custom_fields %}
+            <h6 class="fw-semibold mt-4 mb-3">Custom Fields</h6>
+          {% endif %}
+          {% for field_name, info in custom_fields %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ info.label }} ({{ info.type }})</label>
+            {% include 'track_habits/field_input.html' %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-success w-100 fw-semibold">
+            Submit
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  {% endif %}
+
+  <!-- Previous Records -->
+  <h4 class="mt-4" style="color: var(--text-color);">Previous Records</h4>
+  {% if records %}
+  <ul class="list-group mb-3" style="border-radius: 0.3rem; overflow: hidden;">
+    {% for rec in records %}
+    <li class="list-group-item d-flex justify-content-between align-items-center record-item"
+        data-date="{{ rec.date|date:'F d, Y' }}"
+        data-json="{{ rec.data|escapejs }}"
+        data-bs-toggle="modal"
+        data-bs-target="#recordModal"
+        style="background-color: var(--card-bg); color: var(--text-color); cursor: pointer;">
+      <strong>{{ rec.date|date:"F d, Y" }}</strong>
+      <button class="btn btn-outline-info btn-sm">View</button>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-muted mb-3">No records yet.</p>
+  {% endif %}
+
+  <!-- Back Button -->
+  <div class="mt-3">
+    <a href="{% url 'habits:track_habit_detail' habit.id %}" 
+       class="btn btn-outline-secondary fw-semibold">
+      <i class="bi bi-arrow-left-circle me-1"></i> Back to Habit Details
+    </a>
+  </div>
+</div>
+
+<!-- Record Modal -->
+{% include 'track_habits/modal_record_details.html' %}
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center"
+         style="background-color: var(--card-bg); color: var(--text-color);">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">Keep it Up!</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="successModalBody">
+        <p class="fs-5">You're doing great!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Show details in modal
+  document.querySelectorAll('.record-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const dateStr = item.dataset.date;
+      const rawJson = item.dataset.json || '{}';
+      let parsed = {};
+      try {
+        parsed = JSON.parse(rawJson);
+      } catch (e) {
+        console.error("JSON parse error:", e);
+      }
+      document.getElementById('recordModalLabel').textContent =
+        "Record Details (" + dateStr + ")";
+      let html = '';
+      if (Object.keys(parsed).length > 0) {
+        html += '<div class="list-group">';
+        for (let key in parsed) {
+          html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center"
+                 style="background-color: var(--card-bg); color: var(--text-color);">
+              <strong>${key}</strong>
+              <span class="badge bg-primary rounded-pill">${parsed[key]}</span>
+            </div>`;
+        }
+        html += '</div>';
+      } else {
+        html = "<p class='text-muted'>No data found.</p>";
+      }
+      document.getElementById('recordModalBody').innerHTML = html;
+    });
+  });
+
+  // If URL has ?success=1 => show success modal
+  const query = new URLSearchParams(window.location.search);
+  if (query.get("success") === "1") {
+    const customMsg = query.get("msg");
+    const message = customMsg || "You're doing great!";
+    document.getElementById("successModalBody").innerHTML =
+      `<p class="fs-5">${message}</p>`;
+    const modal = new bootstrap.Modal(document.getElementById("successModal"));
+    modal.show();
+  }
+});
+</script>
+{% endblock %}
+
+{% endblock %}
+

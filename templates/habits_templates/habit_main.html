@@ -1,28 +1,19 @@
-{% load crispy_forms_tags %}
-{% load static %}
-
-<div class="text-center mb-5">
-  <h2>Create a New Habit</h2>
-  <p>Select a ready-made template or build your own:</p>
-</div>
-<div class="row row-cols-1 row-cols-md-4 g-4 mb-4">
-  {% for tpl in templates %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="text-center mb-4" style="color: var(--text-color);">Create a New Habit</h2>
+  <div class="row row-cols-1 row-cols-md-4 g-3">
+    {% for tpl in templates %}
     <div class="col">
-      <div class="card template-card text-center" data-template="{{ tpl.key }}">
-        <div class="card-body">
-          {% if tpl.key == 'stop_smoking' %}
-            <i class="bi bi-x-circle display-4 mb-3"></i>
-          {% elif tpl.key == 'eat_healthy' %}
-            <i class="bi bi-nut display-4 mb-3"></i>
-          {% else %}
-            <i class="bi {{ tpl.icon }} display-4 mb-3"></i>
-          {% endif %}
-          <h5 class="card-title">{{ tpl.label }}</h5>
-        </div>
+      <div
+        class="template-card text-center p-3"
+        data-template="{{ tpl.key }}"
+        style="background-color: var(--input-bg); border-radius: 0.25rem; cursor: pointer;"
+      >
+        <i class="bi {{ tpl.icon }} mb-2" style="font-size: 2rem; color: var(--text-color);"></i>
+        <div style="color: var(--text-color); font-weight: 500;">{{ tpl.label }}</div>
       </div>
     </div>
-  {% endfor %}
+    {% endfor %}
+  </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{% static 'js/habit_form.js' %}"></script>
+{% endblock %}
