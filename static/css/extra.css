@@ -1,26 +1,3 @@
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  /* Make the sidebar color show behind everything */
-  background-color: var(--sidebar-bg);
-}
-
-.wrapper {
-  /* Column flex so footer sits at bottom if there's little content */
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  /* Light background for main content area */
-  background-color: var(--body-bg);
-  /* Push content left, leaving space for the fixed sidebar */
-  margin-right: 280px;
-}
-
-.main-content {
-  flex: 1;
-}
-
 /* Theme Variables */
 :root {
   --body-bg: #f0f2f5;
@@ -31,18 +8,45 @@ html, body {
 }
 
 [data-theme="dark"] {
-  --body-bg: #1c1c1c;
-  --text-color: #f8f9fa;
-  --sidebar-bg: #343a40;
-  --sidebar-text: #f8f9fa;
-  --sidebar-active-bg: #495057;
+  --body-bg: #000000;
+  --text-color: #f1f1f1;
+
+  --sidebar-bg: #1d1d1d;
+  --sidebar-text: #f1f1f1;
+  --sidebar-active-bg: #333333;
+
+  --card-bg: #1f1f1f;       
+  --card-border: #444444;   
+  --input-bg: #2b2b2b;
 }
 
 body {
   font-family: sans-serif;
+  background-color: var(--body-bg);
 }
 
-/* Sidebar (fixed on the right) */
+
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--sidebar-bg);
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--body-bg);
+  margin-right: 280px;
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* Sidebar */
 .sidebar {
   background-color: var(--sidebar-bg);
   color: var(--sidebar-text);
@@ -383,4 +387,25 @@ body {
 [data-theme="dark"] .table.table-sm th,
 [data-theme="dark"] .table.table-sm td {
   border-color: #666 !important;
+}
+
+
+[data-theme="dark"] .card {
+  background-color: #1f1f1f !important;
+  color: #f2f2f2 !important;
+  border: none;
+}
+[data-theme="dark"] .bg-light {
+  background-color: #333 !important;
+  color: #fff !important;
+}
+[data-theme="dark"] .form-label {
+  color: #fff !important;
+}
+.template-card {
+  min-height: 150px;
+}
+[data-theme="dark"] .template-card {
+  background-color: #444 !important;
+  color: #fff !important;
 }

@@ -1,45 +1,20 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from urllib.parse import urlencode
+
 from django.utils import timezone
-from django.utils.timezone import now
 from .forms import HabitForm
 from .models import Habit, HabitRecord
+from django.http import JsonResponse
 
-PRESET_HABITS = {
-    'stop_smoking': {
-        'extra_fields': [
-            {'key': 'cigarettes_per_day', 'label': 'Cigarettes per Day', 'type': 'number'},
-            {'key': 'craving_level', 'label': 'Craving Level (1-10)', 'type': 'number'},
-            {'key': 'planned_quit_date', 'label': 'Planned Quit Date', 'type': 'date'},
-            {'key': 'nicotine_replacement', 'label': 'Nicotine Replacement', 'type': 'text'},
-            {'key': 'trigger_coping', 'label': 'Triggers & Coping Strategies', 'type': 'text'}
-        ]
-    },
-    'wake_up_early': {
-        'extra_fields': [
-            {'key': 'current_wake_time', 'label': 'Current Wake Time', 'type': 'time'},
-            {'key': 'desired_wake_time', 'label': 'Desired Wake Time', 'type': 'time'},
-            {'key': 'bedtime', 'label': 'Bedtime', 'type': 'time'},
-            {'key': 'sleep_quality', 'label': 'Sleep Quality (1-10)', 'type': 'number'},
-            {'key': 'snooze_count', 'label': 'Number of Snoozes', 'type': 'number'}
-        ]
-    },
-    'eat_healthy': {
-        'extra_fields': [
-            {'key': 'daily_calorie_target', 'label': 'Daily Calorie Target', 'type': 'number'},
-            {'key': 'fruit_veg_target', 'label': 'Fruit & Veg Servings', 'type': 'number'},
-            {'key': 'water_intake_goal', 'label': 'Water Intake (glasses/day)', 'type': 'number'},
-            {'key': 'junk_food_consumption', 'label': 'Junk Food Consumption', 'type': 'number'}
-        ]
-    }
-}
+from .utils import (
+    PRESET_HABITS,
+    PRESET_TEMPLATES,
+    AWARD_MESSAGES,
+    NOTIFICATION_MESSAGES
+)
 
-PRESET_TEMPLATES = [
-    {'key': 'stop_smoking', 'icon': 'bi-emoji-smile', 'label': 'Stop Smoking'},
-    {'key': 'wake_up_early', 'icon': 'bi-sunrise', 'label': 'Wake Up Early'},
-    {'key': 'eat_healthy', 'icon': 'bi-apple', 'label': 'Eat Healthy'},
-    {'key': 'custom', 'icon': 'bi-pencil-square', 'label': 'Custom'}
-]
 
 
 @login_required
@@ -119,19 +94,10 @@ def form_new_habit_view(request):
         'template': template_key
     })
 
-
 @login_required
 def ongoing_habit_view(request):
     habits = Habit.objects.filter(user=request.user)
     return render(request, 'ongoing_habit.html', {'habits': habits})
-
-
-@login_required
-def abort_process_view(request, habit_id):
-    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
-    habit.delete()
-    return redirect('habits:ongoing_habit')
-
 
 @login_required
 def insert_data_view(request, habit_id):
@@ -144,16 +110,20 @@ def insert_data_view(request, habit_id):
 
     preset_fields = []
     custom_fields = []
+    static_display_fields = []
 
     PRESET_KEYS = [
         'cigarettes_per_day', 'craving_level', 'planned_quit_date', 'nicotine_replacement',
-        'trigger_coping', 'current_wake_time','desired_wake_time','bedtime','sleep_quality','snooze_count',
-        'daily_calorie_target','fruit_veg_target','water_intake_goal','junk_food_consumption'
+        'trigger_coping', 'current_wake_time', 'desired_wake_time', 'bedtime', 'sleep_quality',
+        'snooze_count', 'daily_calorie_target', 'fruit_veg_target', 'water_intake_goal',
+        'junk_food_consumption'
     ]
 
     for field_name, info in habit.metrics.items():
         imp = info.get('importance', 'daily_optional')
-        if imp in ['daily_required', 'daily_optional']:
+        if imp == 'static_display':
+            static_display_fields.append((field_name, info))
+        elif imp in ['daily_required', 'daily_optional']:
             if field_name in PRESET_KEYS:
                 preset_fields.append((field_name, info))
             else:
@@ -161,13 +131,7 @@ def insert_data_view(request, habit_id):
 
     if request.method == "POST":
         data = {}
-        for field_name, info in preset_fields:
-            posted_val = request.POST.get(field_name, '')
-            if info.get('importance') == 'daily_required' and not posted_val:
-                posted_val = "MISSING"
-            data[field_name] = posted_val
-
-        for field_name, info in custom_fields:
+        for field_name, info in preset_fields + custom_fields:
             posted_val = request.POST.get(field_name, '')
             if info.get('importance') == 'daily_required' and not posted_val:
                 posted_val = "MISSING"
@@ -186,16 +150,25 @@ def insert_data_view(request, habit_id):
         elif habit.template_key == 'eat_healthy':
             habit.check_eat_healthy_progress()
 
-        return redirect('habits:insert_data', habit_id=habit.id)
+        habit.streak += 1
+        habit.points += 1
+        habit.save()
+
+        message_index = min(habit.streak - 1, 4)
+        habit_type = habit.template_key or 'custom'
+        message = AWARD_MESSAGES.get(habit_type, AWARD_MESSAGES['custom'])[message_index]
+
+        query = urlencode({'success': 1, 'msg': message})
+        return redirect(f"{request.path}?{query}")
 
     return render(request, 'track_habits/insert_data.html', {
         'habit': habit,
         'records': records,
         'next_date': next_date,
         'preset_fields': preset_fields,
-        'custom_fields': custom_fields
+        'custom_fields': custom_fields,
+        'static_display_fields': static_display_fields
     })
-
 
 @login_required
 def track_habit_detail_view(request, habit_id):
@@ -237,3 +210,43 @@ def track_habit_detail_view(request, habit_id):
         "total_points": total_points,
         "badge": badge
     })
+
+@login_required
+def abort_process_view(request, habit_id):
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+    habit.delete()
+    return redirect('habits:ongoing_habit')
+
+@login_required
+def notification_dashboard_view(request):
+    user = request.user
+    habits = Habit.objects.filter(user=user)
+
+    grouped = {}
+
+    for habit in habits:
+        key = habit.template_key or 'custom'
+        if key not in grouped:
+            grouped[key] = {
+                'daily': [],
+                'weekly': []
+            }
+        grouped[key][habit.motivational_reminder].append(habit)
+
+    return render(request, 'notifications/dashboard.html', {
+        'grouped_habits': grouped
+    })
+
+@csrf_exempt
+@login_required
+def push_notification(request):
+    if request.method == "POST":
+        habit_type = request.POST.get("habit_type")
+        stage = int(request.POST.get("stage", 0))
+
+        message_list = NOTIFICATION_MESSAGES.get(habit_type, NOTIFICATION_MESSAGES['custom'])
+        message = message_list[stage] if stage < len(message_list) else message_list[-1]
+
+        return JsonResponse({"message": message})
+
+    return JsonResponse({"error": "Invalid request"}, status=400)

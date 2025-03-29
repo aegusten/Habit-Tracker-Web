@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from celery.schedules import crontab
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -19,8 +19,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'crispy_forms',
     'crispy_bootstrap5',
-    'django_celery_beat',
-    'django_celery_results',
     
     'accounts',
     'habits',
@@ -90,49 +88,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 
-
-if DEMO_MODE:
-    CELERY_BEAT_SCHEDULE = {
-        # Fires 1 minute after habit creation
-        'demo_initial_reminder': {
-            'task': 'habits.tasks.send_notification',
-            'schedule': crontab(minute='*/1'),
-            'args': ('Welcome to your new habit!',)
-        },
-        # Fires 2 minutes in → Daily Reminder
-        'demo_daily_reminder': {
-            'task': 'habits.tasks.send_notification',
-            'schedule': crontab(minute='*/2'),
-            'args': ('Daily Check‑In: Keep going!',)
-        },
-        # Fires 3 minutes in → Weekly Reminder
-        'demo_weekly_reminder': {
-            'task': 'habits.tasks.send_notification',
-            'schedule': crontab(minute='*/3'),
-            'args': ('Weekly Motivation: You’re doing great!',)
-        },
-        # Fires 4 minutes in → Upcoming Challenge
-        'demo_challenge': {
-            'task': 'habits.tasks.send_notification',
-            'schedule': crontab(minute='*/4'),
-            'args': ('Next badge in 1 day — keep your streak alive!',)
-        },
-        # Fires 5 minutes in → Badge Earned
-        'demo_badge': {
-            'task': 'habits.tasks.send_notification',
-            'schedule': crontab(minute='*/5'),
-            'args': ('🏅 Congrats — Silver Badge Unlocked!',)
-        },
-        # Fires 6 minutes in → Streak Broken
-        'demo_streak_break': {
-            'task': 'habits.tasks.send_notification',
-            'schedule': crontab(minute='*/6'),
-            'args': ('⚠️ Oops — your streak reset to 0',)
-        },
-    }
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'

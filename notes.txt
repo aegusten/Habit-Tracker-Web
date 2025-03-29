@@ -3,9 +3,6 @@ backend->
 docker-compose up --build
 docker-compose exec web python manage.py migrate
 
--- optional
-docker-compose exec web python manage.py createsuperuser
-
 -----------
 accounts foulder ->
 docker-compose exec web python manage.py makemigrations accounts
@@ -23,11 +20,12 @@ docker-compose up --build
 
 docker-compose exec web python manage.py migrate
 
+docker-compose exec web python manage.py migrate django_celery_beat
+
 -------------------
 Verify Demo‑Mode Notifications
 
-Watch Beat logs (every minute):
-docker-compose logs -f habit-celery-beat
+docker-compose exec web python manage.py shell
 
-Watch Worker logs (task execution):
-docker-compose logs -f habit-celery-worker
+from habits.tasks import send_reminder_notifications
+send_reminder_notifications()

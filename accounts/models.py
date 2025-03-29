@@ -19,6 +19,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.id_number
+    
+class UserProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    notifications_enabled = models.BooleanField(default=True)
+    notification_frequency = models.CharField(max_length=10, choices=[('daily', 'Daily'), ('weekly', 'Weekly')], default='daily')
+
 
 class SecurityQuestion(models.Model):
     question_text = models.CharField(max_length=255)

@@ -1,16 +1,18 @@
 {% block content %}
 <div class="container py-4">
-  <h2 class="text-center mb-4">Create a New Habit</h2>
-  <div class="row row-cols-1 row-cols-md-4 g-4">
+  <h2 class="text-center mb-4" style="color: var(--text-color);">Create a New Habit</h2>
+  <div class="row row-cols-1 row-cols-md-4 g-3">
     {% for tpl in templates %}
-      <div class="col">
-        <div class="card template-card text-center" data-template="{{ tpl.key }}">
-          <div class="card-body">
-            <i class="bi {{ tpl.icon }} display-4 mb-2"></i>
-            <h5>{{ tpl.label }}</h5>
-          </div>
-        </div>
+    <div class="col">
+      <div
+        class="template-card text-center p-3"
+        data-template="{{ tpl.key }}"
+        style="background-color: var(--input-bg); border-radius: 0.25rem; cursor: pointer;"
+      >
+        <i class="bi {{ tpl.icon }} mb-2" style="font-size: 2rem; color: var(--text-color);"></i>
+        <div style="color: var(--text-color); font-weight: 500;">{{ tpl.label }}</div>
       </div>
+    </div>
     {% endfor %}
   </div>
 </div>

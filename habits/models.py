@@ -2,7 +2,6 @@ from django.db import models
 from django.conf import settings
 from django.utils.timezone import now
 from django.apps import apps
-import datetime
 
 class Habit(models.Model):
     TIMELINE_CHOICES = [('1', '1 Month'), ('2', '2 Months')]

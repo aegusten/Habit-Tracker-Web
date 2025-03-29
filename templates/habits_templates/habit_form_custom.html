@@ -1,23 +1,64 @@
 {% if template == "custom" %}
 {% load crispy_forms_tags %}
-<form id="habit-form" method="post">
-  {% csrf_token %}
-  {{ form|crispy }}
-  <div id="customFieldsSection" class="mt-3">
-    <h5>Add Custom Fields</h5>
-    <div id="customFieldsContainer"></div>
-    <button type="button" class="btn btn-primary" id="addCustomField">Add Field</button>
-  </div>
-  <div class="mt-4">
-    <h5>How This System Works</h5>
-    <p>
-      By creating a new habit, you’ll get daily or weekly reminders
-      and earn points for consistent progress. Once you hit certain
-      milestones, achievements will appear in your profile.
-    </p>
-  </div>
-  <button type="submit" class="btn btn-success w-100 mt-3">
-    Confirm
-  </button>
-</form>
+<div class="container mt-4">
+  <form
+    id="habit-form"
+    method="post"
+    style="
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      border: 1px solid var(--card-border);
+      border-radius: 0.25rem;
+      padding: 1rem;
+    "
+  >
+    {% csrf_token %}
+    {{ form|crispy }}
+
+    <div
+      id="customFieldsSection"
+      class="mt-3"
+      style="
+        background-color: var(--input-bg);
+        border-radius: 0.25rem;
+        padding: 1rem;
+      "
+    >
+      <h5 style="color: var(--text-color);">Add Custom Fields</h5>
+      <small style="color: var(--text-color);" class="d-block mb-2">
+        Define extra fields you want to track
+      </small>
+      <div id="customFieldsContainer"></div>
+      <button
+        type="button"
+        class="btn btn-dark mt-2"
+        id="addCustomField"
+      >
+        Add Field
+      </button>
+    </div>
+
+    <div
+      class="mt-4"
+      style="
+        background-color: var(--input-bg);
+        border-radius: 0.25rem;
+        padding: 1rem;
+      "
+    >
+      <h5 style="color: var(--text-color);">How This System Works</h5>
+      <p style="color: var(--text-color);">
+        By creating a new habit, you’ll get daily or weekly reminders
+        and earn points for consistent progress.
+        Once you hit certain milestones, achievements will appear in your profile.
+      </p>
+    </div>
+    <button
+      type="submit"
+      class="btn btn-success w-100 mt-3"
+    >
+      Confirm
+    </button>
+  </form>
+</div>
 {% endif %}

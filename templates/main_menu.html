@@ -1,9 +1,16 @@
 {% extends 'base.html' %}
+
 {% block content %}
   <div class="tab-switcher mb-4">
     <button class="tab-link active" data-target="#today-section">Today</button>
     <button class="tab-link" data-target="#archive-section">Archive</button>
   </div>
+  <div class="btn-group mb-4" role="group">
+    <button type="button" class="btn btn-success" onclick="startNotifications('daily')">Start Daily</button>
+    <button type="button" class="btn btn-info" onclick="startNotifications('weekly')">Start Weekly</button>
+  </div>
+  
+  
   <div id="today-section">
     <div class="row g-3 mb-4">
       <div class="col-12 col-md-6 col-lg-3">
@@ -50,16 +57,110 @@
   </div>
 {% endblock %}
 
+
+
 {% block notifications %}
-<div class="notifications-section">
-  <h5 class="notifications-title mb-2">Notifications</h5>
-  <ul class="notifications-list list-unstyled">
-    <li>
-      <i class="bi bi-bell-fill me-2"></i> This is a sample notification.
-    </li>
-    <li>
-      <i class="bi bi-bell-fill me-2"></i> Another sample notification.
-    </li>
-  </ul>
-</div>
+<script>
+  const dailyHabitTypes = {{ daily_habit_types|safe }};
+  const weeklyHabitTypes = {{ weekly_habit_types|safe }};
+</script>
+
+<div id="notifications-area" class="notification-fixed-bottom"></div>
+
+
+<script>
+  const notificationQueue = [];
+  let isDisplaying = false;
+
+  function startNotifications(type) {
+    const types = type === 'daily' ? dailyHabitTypes : weeklyHabitTypes;
+    types.forEach((habitType, index) => {
+      setTimeout(() => {
+        pushNotification(habitType, index);
+      }, index * 500); // 0.5s stagger between requests
+    });
+  }
+
+  function pushNotification(habitType, stage) {
+    fetch("{% url 'habits:push_notification' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+      body: new URLSearchParams({
+        habit_type: habitType,
+        stage: stage
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message) {
+        notificationQueue.push(data.message);
+        if (notificationQueue.length > 5) {
+          notificationQueue.shift();
+        }
+        displayNextNotification();
+      }
+    });
+  }
+
+  function displayNextNotification() {
+    if (isDisplaying || notificationQueue.length === 0) return;
+
+    isDisplaying = true;
+    const container = document.getElementById("notifications-area");
+
+    const message = notificationQueue.shift();
+    const el = document.createElement("div");
+    el.className = "notification-item alert alert-info fade-in";
+    el.innerHTML = `🔔 ${message} <small class="text-muted">(just now)</small>`;
+    container.appendChild(el);
+
+    setTimeout(() => {
+      el.classList.add("fade-out");
+      setTimeout(() => {
+        el.remove();
+        isDisplaying = false;
+        displayNextNotification();
+      }, 1000);
+    }, 4000);
+  }
+</script>
+
+
+<style>
+.notification-fixed-bottom {
+  position: fixed;
+  bottom: 100px;
+  left: 43%;
+  transform: translateX(-52%);
+  z-index: 1050;
+  width: 320px;
+  max-width: 90%;
+  pointer-events: none;
+}
+
+.notification-item {
+  background-color: #e0f7ff;
+  border: 1px solid #a0d4f7;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  padding: 1rem;
+  color: #004d66;
+  font-weight: 500;
+}
+
+
+.notification-item.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.notification-item.fade-out {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+</style>
 {% endblock %}

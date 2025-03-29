@@ -37,33 +37,6 @@ services:
     networks:
       - habit_network
 
-  celery_worker:
-    build: .
-    container_name: habit-celery-worker
-    command: celery -A backend.celery beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    depends_on:
-      - redis
-      - web
-    env_file:
-      - .env/.postgres
-    volumes:
-      - .:/code
-    networks:
-      - habit_network
-
-  celery_beat:
-    build: .
-    container_name: habit-celery-beat
-    command: celery -A backend beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    depends_on:
-      - redis
-      - celery_worker
-    env_file:
-      - .env/.postgres
-    volumes:
-      - .:/code
-    networks:
-      - habit_network
 
 networks:
   habit_network:
