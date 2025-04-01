@@ -14,4 +14,6 @@ urlpatterns = [
     path('verify_security_answers/', views.verify_security_answers, name='verify_security_answers'),
     path('public_forgot_password/', views.public_forgot_password_view, name='public_forgot_password_view'),
     path('public_verify_security_answers/', views.public_verify_security_answers, name='public_verify_security_answers'),
+    path('profile/', views.profile_view, name='profile'),
+
 ]

@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from .models import User, SecurityQuestion
+from django.contrib.auth import authenticate
 
 class RegisterForm(UserCreationForm):
     question1_subquestion = forms.ChoiceField(label="Select Question 1", required=True)
@@ -50,8 +51,29 @@ class RegisterForm(UserCreationForm):
         return cleaned
 
 
-class LoginForm(AuthenticationForm):
-    username = forms.CharField(label='ID Number')
+class LoginForm(forms.Form):
+    id_number = forms.CharField(label='ID Number')
+    password = forms.CharField(label='Password', widget=forms.PasswordInput)
+
+    def __init__(self, request=None, *args, **kwargs):
+        self.request = request
+        self.user_cache = None
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        id_number = self.cleaned_data.get('id_number')
+        password = self.cleaned_data.get('password')
+
+        if id_number and password:
+            self.user_cache = authenticate(self.request, username=id_number, password=password)
+            if self.user_cache is None:
+                raise forms.ValidationError("Invalid ID number or password.")
+            if not self.user_cache.is_active:
+                raise forms.ValidationError("This account is inactive.")
+        return self.cleaned_data
+
+    def get_user(self):
+        return self.user_cache
 
 class UpdatePersonalInfoForm(forms.ModelForm):
     class Meta:

@@ -17,7 +17,11 @@ from .models import (
     UserSecurityAnswer,
     SecurityQuestion,
     User,
+    LoginActivity,
+    UserProfile,
 )
+
+from habits.models import HabitRecord
 
 from habits.utils import (
     PRESET_HABITS,
@@ -56,6 +60,9 @@ def main_menu_view(request):
 
     habit_summary['daily'] = list(set(habit_summary['daily']))
     habit_summary['weekly'] = list(set(habit_summary['weekly']))
+    
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    show_notifications = profile.notifications_enabled
 
     print(f"[SUMMARY] Total Habits: {habits.count()}")
     print(f"[SUMMARY] Daily Types: {habit_summary['daily']}")
@@ -65,6 +72,7 @@ def main_menu_view(request):
         'daily_habit_types': habit_summary['daily'],
         'weekly_habit_types': habit_summary['weekly'],
         'habit_count': habits.count(),
+        'show_notifications': show_notifications,
     })
 
 def logout_view(request):
@@ -116,9 +124,10 @@ def register_view(request):
 
 def login_view(request):
     if request.method == 'POST':
-        form = LoginForm(request, data=request.POST)
+        form = LoginForm(request=request, data=request.POST)
         if form.is_valid():
             login(request, form.get_user())
+            LoginActivity.objects.create(user=form.get_user())
             return redirect('accounts:main_menu')
     else:
         form = LoginForm()
@@ -212,16 +221,21 @@ def edit_personal_info_view(request):
     form = UpdatePersonalInfoForm(request.POST or None, instance=user)
     password_form = PasswordChangeForm(user=user)
     set_password_form = SetPasswordForm(user=user)
+    
+    recent_logins = LoginActivity.objects.filter(user=user).order_by('-timestamp')[:5]
+    
     user_answers = user.security_answers.all()
     questions = {ua.question_text: ua.answer for ua in user_answers}
     if request.method == 'POST' and form.is_valid():
         form.save()
         return redirect('accounts:edit_personal_info')
+    
     context = {
         'form': form,
         'password_form': password_form,
         'set_password_form': set_password_form,
         'security_questions': questions,
+        'recent_logins': recent_logins,
     }
     return render(request, 'edit_personal_info.html', context)
 
@@ -236,3 +250,20 @@ def verify_security_answers(request):
         if ua.answer.strip().lower() == submitted:
             correct += 1
     return JsonResponse({'valid': correct >= 2})
+
+@login_required
+def profile_view(request):
+    user = request.user
+    login_count = LoginActivity.objects.filter(user=user).count()
+    habits = Habit.objects.filter(user=user)
+    completed_prepared = habits.filter(achieved=True, template_key__isnull=False).count()
+    completed_any = habits.filter(achieved=True).exists()
+    all_logs = HabitRecord.objects.filter(habit__user=user).values('date').distinct().count()
+
+    context = {
+        'login_badge': login_count >= 20,
+        'triple_finisher_badge': completed_prepared >= 3,
+        'first_win_badge': completed_any,
+        'consistency_badge': all_logs >= 20
+    }
+    return render(request, 'edit_personal_info.html', context)

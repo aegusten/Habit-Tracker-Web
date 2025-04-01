@@ -21,7 +21,7 @@ class Habit(models.Model):
 
     metrics = models.JSONField(default=dict)
 
-    targets = models.JSONField(default=dict)
+    targets = models.JSONField(default=dict) #remove
     achieved = models.BooleanField(default=False)
     achieved_date = models.DateField(null=True, blank=True)
 

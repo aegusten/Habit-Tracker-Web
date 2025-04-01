@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
 from .managers import UserManager
 from django.conf import settings
+from django.utils.timezone import now
 
 class User(AbstractBaseUser, PermissionsMixin):
     id_number = models.CharField(max_length=50, unique=True)
@@ -48,3 +49,10 @@ class UserSecurityAnswer(models.Model):
 
     def __str__(self):
         return f"{self.user.id_number} - {self.question.question_text}"
+    
+class LoginActivity(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(default=now)
+
+    def __str__(self):
+        return f"{self.user.id_number} - {self.timestamp.strftime('%Y-%m-%d %H:%M')}"

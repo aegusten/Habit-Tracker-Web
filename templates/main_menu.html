@@ -60,6 +60,12 @@
 
 
 {% block notifications %}
+{% if show_notifications %}
+  <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+    <span class="bi bi-bell"></span> Notifications are enabled.
+  </div>
+{% endif %}
+
 <script>
   const dailyHabitTypes = {{ daily_habit_types|safe }};
   const weeklyHabitTypes = {{ weekly_habit_types|safe }};
@@ -77,7 +83,7 @@
     types.forEach((habitType, index) => {
       setTimeout(() => {
         pushNotification(habitType, index);
-      }, index * 500); // 0.5s stagger between requests
+      }, index * 500); 
     });
   }
 

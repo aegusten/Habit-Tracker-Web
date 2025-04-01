@@ -4,8 +4,6 @@
 {% block content %}
 <div class="container my-4" 
      style="background-color: var(--body-bg); color: var(--text-color); max-width: 1200px; border-radius: 0.5rem;">
-
-  <!-- Title -->
   <div class="text-center mb-4">
     <h2 class="fw-bold mb-1" style="color: var(--text-color);">Insert Data</h2>
     <p class="mb-0" style="color: var(--text-color);">
@@ -14,7 +12,6 @@
   </div>
   <hr class="mb-4" style="border-color: var(--text-color); opacity: 0.4;">
 
-  <!-- If Habit Achieved -->
   {% if habit.achieved %}
   <div class="card mb-4 border-0 shadow-sm" 
        style="background-color: var(--card-bg); color: var(--text-color);">
@@ -29,9 +26,7 @@
 
   {% else %}
     {% if static_display_fields %}
-    <!-- Two-column layout if static_display_fields exist -->
     <div class="row row-cols-1 row-cols-md-2 g-4">
-      <!-- Left Column: Habit Info -->
       <div class="col">
         <div class="card border-0 shadow-sm h-100"
              style="background-color: var(--card-bg); color: var(--text-color);">
@@ -42,14 +37,13 @@
             {% for field_name, info in static_display_fields %}
             <p class="mb-2">
               <strong>{{ info.label }}:</strong> 
-              <span class="ms-2 text-muted">{{ info.default|default:"-" }}</span>
+              <span class="ms-2" style="color: var(--text-muted);">{{ info.default|default:"-" }}</span>
             </p>
             {% endfor %}
           </div>
         </div>
       </div>
 
-      <!-- Right Column: Daily Entry -->
       <div class="col">
         <div class="card border-0 shadow-sm h-100"
              style="background-color: var(--card-bg); color: var(--text-color);">
@@ -69,7 +63,6 @@
                 {% endif %}
               {% endif %}
               
-              <!-- Preset Fields -->
               {% for field_name, info in preset_fields %}
               <div class="mb-3">
                 <label class="form-label fw-semibold">{{ info.label }} ({{ info.type }})</label>
@@ -77,7 +70,6 @@
               </div>
               {% endfor %}
 
-              <!-- Custom Fields -->
               {% if habit.template_key != "custom" and custom_fields %}
                 <h6 class="fw-semibold mt-4 mb-3">Custom Fields</h6>
               {% endif %}
@@ -96,7 +88,6 @@
       </div>
     </div>
     {% else %}
-    <!-- Single Card if no static_display_fields -->
     <div class="card mb-4 border-0 shadow-sm"
          style="background-color: var(--card-bg); color: var(--text-color);">
       <div class="card-header bg-success text-white border-0">
@@ -138,15 +129,13 @@
     </div>
     {% endif %}
   {% endif %}
-
-  <!-- Previous Records -->
+  
   <h4 class="mt-4" style="color: var(--text-color);">Previous Records</h4>
   {% if records %}
   <ul class="list-group mb-3" style="border-radius: 0.3rem; overflow: hidden;">
     {% for rec in records %}
     <li class="list-group-item d-flex justify-content-between align-items-center record-item"
-        data-date="{{ rec.date|date:'F d, Y' }}"
-        data-json="{{ rec.data|escapejs }}"
+        data-record="{{ rec.id }}"
         data-bs-toggle="modal"
         data-bs-target="#recordModal"
         style="background-color: var(--card-bg); color: var(--text-color); cursor: pointer;">
@@ -159,7 +148,7 @@
   <p class="text-muted mb-3">No records yet.</p>
   {% endif %}
 
-  <!-- Back Button -->
+
   <div class="mt-3">
     <a href="{% url 'habits:track_habit_detail' habit.id %}" 
        class="btn btn-outline-secondary fw-semibold">
@@ -168,10 +157,9 @@
   </div>
 </div>
 
-<!-- Record Modal -->
 {% include 'track_habits/modal_record_details.html' %}
 
-<!-- Success Modal -->
+{% if request.GET.success == "1" %}
 <div class="modal fade" id="successModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content text-center"
@@ -181,60 +169,67 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" id="successModalBody">
-        <p class="fs-5">You're doing great!</p>
+        <p class="fs-5">{{ request.GET.msg|default:"You're doing great!" }}</p>
       </div>
     </div>
   </div>
 </div>
+{% endif %}
+
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  // Show details in modal
-  document.querySelectorAll('.record-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const dateStr = item.dataset.date;
-      const rawJson = item.dataset.json || '{}';
-      let parsed = {};
-      try {
-        parsed = JSON.parse(rawJson);
-      } catch (e) {
-        console.error("JSON parse error:", e);
-      }
-      document.getElementById('recordModalLabel').textContent =
-        "Record Details (" + dateStr + ")";
-      let html = '';
-      if (Object.keys(parsed).length > 0) {
-        html += '<div class="list-group">';
-        for (let key in parsed) {
-          html += `
-            <div class="list-group-item d-flex justify-content-between align-items-center"
-                 style="background-color: var(--card-bg); color: var(--text-color);">
-              <strong>${key}</strong>
-              <span class="badge bg-primary rounded-pill">${parsed[key]}</span>
-            </div>`;
-        }
-        html += '</div>';
-      } else {
-        html = "<p class='text-muted'>No data found.</p>";
-      }
-      document.getElementById('recordModalBody').innerHTML = html;
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".record-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const recordId = item.dataset.record;
+        fetch(`/habits/api/record/${recordId}/`)
+          .then(res => res.json())
+          .then(data => {
+            const label = `Record Details (${data.date})`;
+            document.getElementById("recordModalLabel").textContent = label;
+  
+            if (!data.data || Object.keys(data.data).length === 0) {
+              document.getElementById("recordModalBody").innerHTML =
+                "<p class='text-muted'>No data found.</p>";
+              return;
+            }
+  
+            let html = '<div class="list-group">';
+            for (const [key, val] of Object.entries(data.data)) {
+              html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center"
+                     style="background-color: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                  <span class="fw-semibold text-capitalize">${key.replace(/_/g, ' ')}</span>
+                  <span class="badge bg-primary rounded-pill px-3 py-1">${val}</span>
+                </div>`;
+            }
+            html += "</div>";
+            document.getElementById("recordModalBody").innerHTML = html;
+          })
+          .catch(error => {
+            console.error("Failed to fetch record data:", error);
+            document.getElementById("recordModalBody").innerHTML =
+              "<p class='text-danger'>Unable to load record data.</p>";
+          });
+      });
     });
-  });
+  
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("success") === "1") {
+      const modal = new bootstrap.Modal(document.getElementById("successModal"));
+      modal.show();
 
-  // If URL has ?success=1 => show success modal
-  const query = new URLSearchParams(window.location.search);
-  if (query.get("success") === "1") {
-    const customMsg = query.get("msg");
-    const message = customMsg || "You're doing great!";
-    document.getElementById("successModalBody").innerHTML =
-      `<p class="fs-5">${message}</p>`;
-    const modal = new bootstrap.Modal(document.getElementById("successModal"));
-    modal.show();
-  }
-});
-</script>
+      const url = new URL(window.location.href);
+      url.searchParams.delete("success");
+      url.searchParams.delete("msg");
+      window.history.replaceState({}, document.title, url.toString());
+    }
+  });
+  </script>
+  
 {% endblock %}
+
 
 {% endblock %}
 

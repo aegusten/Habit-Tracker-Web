@@ -2,7 +2,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from urllib.parse import urlencode
+from django.templatetags.static import static
+from django.views.decorators.http import require_POST
+from django.utils.timezone import now
 
+from django.contrib import messages
 from django.utils import timezone
 from .forms import HabitForm
 from .models import Habit, HabitRecord
@@ -175,9 +179,28 @@ def track_habit_detail_view(request, habit_id):
     habit = get_object_or_404(Habit, id=habit_id, user=request.user)
     habit_records = HabitRecord.objects.filter(habit=habit).order_by("date")
 
+    if request.method == "POST":
+        form_type = request.POST.get("form_type")
+
+        if form_type == "reminder":
+            new_reminder = request.POST.get("reminder_frequency")
+            if new_reminder:
+                habit.motivational_reminder = new_reminder
+                habit.save()
+                messages.success(request, "Reminder frequency updated successfully.")
+
+        elif form_type == "timeline":
+            new_timeline = request.POST.get("timeline")
+            if new_timeline:
+                habit.timeline = new_timeline
+                habit.save()
+                messages.success(request, "Goal timeline updated successfully.")
+
+        return redirect("habits:track_habit_detail", habit_id=habit.id)
+
     numeric_fields = []
     for key, info in habit.metrics.items():
-        if info.get('importance') in ['daily_required','daily_optional'] and info.get('type') == 'number':
+        if info.get('importance') in ['daily_required', 'daily_optional'] and info.get('type') == 'number':
             numeric_fields.append(key)
 
     chart_data = []
@@ -193,13 +216,38 @@ def track_habit_detail_view(request, habit_id):
 
     streak = habit.streak
     total_points = habit.points
+    committed_days = habit.streak
+    total_days = int(habit.timeline) * 30
+    days_remaining = max(total_days - committed_days, 0)
+
     badge = None
+    badge_icon = None
     if total_points >= 150:
         badge = "Platinum"
+        badge_icon = static('icons/platinum_badge.png')
+        if not habit.achieved:
+            habit.achieved = True
+            habit.achieved_date = now().date()
+            habit.save()
     elif total_points >= 75:
         badge = "Gold"
+        badge_icon = static('icons/gold_badge.png')
     elif total_points > 0:
         badge = "Silver"
+        badge_icon = static('icons/silver_badge.png')
+
+    if total_points < 75:
+        next_badge = "Silver"
+        next_badge_icon = static('icons/silver_badge.png')
+        points_needed = 75 - total_points
+    elif total_points < 150:
+        next_badge = "Gold"
+        next_badge_icon = static('icons/gold_badge.png')
+        points_needed = 150 - total_points
+    else:
+        next_badge = "Platinum"
+        next_badge_icon = static('icons/platinum_badge.png')
+        points_needed = 0
 
     return render(request, 'track_habits/track_habit_detail.html', {
         "habit": habit,
@@ -208,8 +256,16 @@ def track_habit_detail_view(request, habit_id):
         "numeric_fields": numeric_fields,
         "streak": streak,
         "total_points": total_points,
-        "badge": badge
+        "badge": badge,
+        "badge_icon": badge_icon,
+        "next_badge": next_badge,
+        "next_badge_icon": next_badge_icon,
+        "points_needed": points_needed,
+        "committed_days": committed_days,
+        "days_remaining": days_remaining,
+        "achieved": habit.achieved
     })
+
 
 @login_required
 def abort_process_view(request, habit_id):
@@ -250,3 +306,42 @@ def push_notification(request):
         return JsonResponse({"message": message})
 
     return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+@require_POST
+@login_required
+def save_custom_data_api(request, habit_id):
+    import json
+    habit = get_object_or_404(Habit, id=habit_id, user=request.user)
+
+    if habit.template_key: 
+        return JsonResponse({"error": "This habit is not editable manually."}, status=400)
+
+    try:
+        payload = json.loads(request.body)
+        date = timezone.now().date()
+        record, created = HabitRecord.objects.get_or_create(habit=habit, date=date)
+        updated_data = record.data or {}
+
+        for field in habit.metrics:
+            meta = habit.metrics[field]
+            if meta.get("type") == "number":
+                if field in payload:
+                    updated_data[field] = payload[field]
+
+        record.data = updated_data
+        record.save()
+
+        return JsonResponse({"success": True})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+    
+
+@login_required
+def get_record_data_api(request, record_id):
+    record = get_object_or_404(HabitRecord, id=record_id, habit__user=request.user)
+    return JsonResponse({
+        "id": record.id,
+        "date": record.date.strftime("%B %d, %Y"),
+        "data": record.data or {}
+    })

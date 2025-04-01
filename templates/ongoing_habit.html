@@ -3,10 +3,10 @@
 <div class="container my-4">
   <h2 class="ongoing-title mb-4">Ongoing Habits</h2>
   {% if habits %}
-    <div class="row justify-content-center g-4">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
       {% for habit in habits %}
-        <div class="col-12 col-md-6 col-xl-4">
-          <div class="card card-ongoing h-100">
+        <div class="col d-flex">
+          <div class="card card-ongoing h-100 w-100 d-flex flex-column justify-content-between">
             <div class="card-body d-flex flex-column">
               <h5 class="card-title">{{ habit.name }}</h5>
               <p class="card-text mb-2">
@@ -18,8 +18,6 @@
               <p class="card-text mb-2">
                 <i class="bi bi-bell me-1"></i> Reminder: {{ habit.get_motivational_reminder_display }}
               </p>
-
-              <!-- Add a paragraph to show the habit type -->
               <p class="card-text mb-2">
                 <strong>Type:</strong>
                 {% if habit.template_key == "stop_smoking" %}
@@ -34,7 +32,6 @@
                   Unknown
                 {% endif %}
               </p>
-
               <p class="card-text mb-2">
                 <i class="bi bi-fire me-1"></i> Streak: {{ habit.streak }}
               </p>
@@ -42,14 +39,14 @@
                 <i class="bi bi-star me-1"></i> Points: {{ habit.points }}
               </p>
             </div>
-            <div class="card-footer d-flex gap-2 justify-content-center">
-              <a href="{% url 'habits:track_habit_detail' habit.id %}" class="btn btn-sm btn-primary btn-larger">
+            <div class="card-footer d-flex flex-wrap gap-2 justify-content-between px-3 py-2">
+              <a href="{% url 'habits:track_habit_detail' habit.id %}" class="btn btn-sm btn-primary flex-fill">
                 <i class="bi bi-arrow-repeat me-1"></i> Track
               </a>
-              <a href="{% url 'habits:abort_process' habit.id %}" class="btn btn-sm btn-danger btn-larger">
+              <a href="{% url 'habits:abort_process' habit.id %}" class="btn btn-sm btn-danger flex-fill">
                 <i class="bi bi-x-circle me-1"></i> Abort
               </a>
-              <a href="{% url 'habits:insert_data' habit.id %}" class="btn btn-sm btn-success btn-larger">
+              <a href="{% url 'habits:insert_data' habit.id %}" class="btn btn-sm btn-success flex-fill">
                 <i class="bi bi-pencil-square me-1"></i> Insert
               </a>
             </div>
@@ -58,9 +55,16 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="text-center">
-      <p>No habits found. <a href="{% url 'habits:form_new_habit' %}">Create one?</a></p>
+  <div class="no-habits-container text-center mt-5">
+    <div class="no-habits-card mx-auto p-4 rounded-4 shadow-sm">
+      <h4 class="mb-3 fw-semibold">You don’t have any habits yet</h4>
+      <p class="text-muted mb-4">Start building better routines today.</p>
+      <a href="{% url 'habits:form_new_habit' %}" class="btn btn-primary px-4 py-2">
+        <i class="bi bi-plus-circle me-1"></i> Create Your First Habit
+      </a>
     </div>
+  </div>
+  
   {% endif %}
 </div>
 {% endblock %}
