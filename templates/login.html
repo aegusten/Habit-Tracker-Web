@@ -11,47 +11,9 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="{% static 'css/extra.css' %}" rel="stylesheet">
 
-  <style>
-    /* Make the entire page use our body bg/color, no extra scroll */
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      background-color: var(--body-bg);
-      color: var(--text-color);
-      overflow-x: hidden;
-    }
-    /* Flex container to pin footer */
-    .login-wrapper {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    /* The main content area grows/shrinks so the footer stays at bottom */
-    .login-content {
-      flex: 1 0 auto; /* grow/shrink as needed */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .login-card {
-      background-color: var(--card-bg, #fff);
-      color: var(--text-color);
-      border: 1px solid var(--card-border, #ccc);
-      border-radius: 0.3rem;
-      width: 100%;
-      max-width: 500px; /* stays narrower on large screens */
-      padding: 2rem;
-    }
-    /* Footer sits at the bottom. */
-    .login-footer {
-      flex-shrink: 0;
-    }
-  </style>
 </head>
 <body>
 <div class="login-wrapper">
-  <!-- Main Content (Login) -->
   <div class="login-content">
     <div class="login-card">
       <h2 class="text-center mb-4">Login</h2>
@@ -59,7 +21,7 @@
         {% csrf_token %}
         {{ form.non_field_errors }}
         <div class="mb-3">
-          {{ form.username|as_crispy_field }}
+          {{ form.id_number|as_crispy_field }}
         </div>
         <div class="mb-3">
           {{ form.password|as_crispy_field }}
@@ -87,13 +49,11 @@
     </div>
   </div>
 
-  <!-- Footer -->
   <footer class="login-footer text-center p-3">
     © 2025 MyHabitTracker. All rights reserved.
   </footer>
 </div>
 
-<!-- Register Modal -->
 <div class="modal fade" id="registerModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div
@@ -163,7 +123,6 @@
   </div>
 </div>
 
-<!-- Forgot Password Modal -->
 <div class="modal fade" id="forgotPassModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div
@@ -239,7 +198,9 @@
   </div>
 </div>
 
+<script src="{% static 'serviceworker.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   var fpStep1 = document.getElementById('fpStep1');
@@ -358,5 +319,40 @@ document.addEventListener("DOMContentLoaded", function() {
   };
 });
 </script>
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--body-bg);
+    color: var(--text-color);
+    overflow-x: hidden;
+  }
+
+  .login-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .login-content {
+    flex: 1 0 auto; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .login-card {
+    background-color: var(--card-bg, #fff);
+    color: var(--text-color);
+    border: 1px solid var(--card-border, #ccc);
+    border-radius: 0.3rem;
+    width: 100%;
+    max-width: 500px;
+    padding: 2rem;
+  }
+
+  .login-footer {
+    flex-shrink: 0;
+  }
+</style>
 </body>
 </html>

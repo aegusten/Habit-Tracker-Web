@@ -9,9 +9,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  function applyFieldLogic(select) {
+    const row = select.closest('.custom-field');
+    const defaultInput = row.querySelector('.custom-field-value');
+    const defaultWrapper = row.querySelector('.default-wrapper');
+    const importanceWrapper = row.querySelector('.importance-wrapper');
+    const importanceSelect = row.querySelector('.custom-field-required');
+    const selectedType = select.value.toLowerCase();
+
+    if (selectedType === 'yesno') {
+      defaultWrapper.style.display = 'none';
+      defaultInput.value = '';
+      importanceWrapper.style.display = 'none';
+    } else {
+      defaultWrapper.style.display = '';
+      importanceWrapper.style.display = '';
+
+      if (selectedType === 'number') {
+        defaultInput.type = 'number';
+      } else if (selectedType === 'date') {
+        defaultInput.type = 'date';
+      } else if (selectedType === 'time') {
+        defaultInput.type = 'time';
+      } else {
+        defaultInput.type = 'text';
+      }
+
+      importanceSelect.innerHTML = '';
+
+      const optionOptional = document.createElement('option');
+      optionOptional.value = 'optional';
+      optionOptional.textContent = 'Optional';
+      importanceSelect.appendChild(optionOptional);
+
+      const optionRelevant = document.createElement('option');
+      optionRelevant.value = 'relevant';
+      optionRelevant.textContent = 'Relevant';
+      importanceSelect.appendChild(optionRelevant);
+
+      if (!['yesno', 'time'].includes(selectedType)) {
+        const optionDisplay = document.createElement('option');
+        optionDisplay.value = 'display';
+        optionDisplay.textContent = 'Display';
+        importanceSelect.appendChild(optionDisplay);
+      }
+    }
+  }
+
   function createFieldRow() {
     const fieldId = 'field-' + Date.now();
-    return `
+    const html = `
       <div class="row mb-3 align-items-end custom-field" id="${fieldId}">
         <div class="col-md-3">
           <label for="${fieldId}-name" class="form-label">Field Name</label>
@@ -27,40 +74,33 @@ document.addEventListener('DOMContentLoaded', () => {
             <option value="yesno">Yes/No</option>
           </select>
         </div>
-        <div class="col-md-3">
-          <label for="${fieldId}-importance" class="form-label">Importance</label>
-          <select id="${fieldId}-importance" name="custom_field_required[]" class="form-select custom-field-required">
-            <option value="optional">Optional</option>
-            <option value="relevant">Relevant</option>
-          </select>
+        <div class="col-md-3 importance-wrapper">
+          <label class="form-label">Importance</label>
+          <select name="custom_field_required[]" class="form-select custom-field-required"></select>
         </div>
-        <div class="col-md-2">
-          <label for="${fieldId}-default" class="form-label">Default Value</label>
-          <input type="text" id="${fieldId}-default" name="custom_field_value[]" class="form-control custom-field-value" placeholder="(optional)">
+        <div class="col-md-2 default-wrapper">
+          <label class="form-label">Default Value</label>
+          <input type="text" name="custom_field_value[]" class="form-control custom-field-value" placeholder="(optional)">
         </div>
-        <div class="col-md-1 text-end">
-          <button type="button" class="btn btn-outline-danger remove-field" data-field-id="${fieldId}">Remove</button>
+        <div class="col-md-1 text-end mt-4">
+          <button type="button" class="btn btn-outline-danger btn-sm mt-2" data-field-id="${fieldId}">Remove</button>
         </div>
       </div>`;
+    customFieldsContainer.insertAdjacentHTML('beforeend', html);
+    const newRow = document.getElementById(fieldId);
+    const select = newRow.querySelector('.custom-field-type');
+    applyFieldLogic(select);
   }
 
   if (addCustomFieldBtn) {
-    addCustomFieldBtn.addEventListener('click', () => {
-      const newFieldHTML = createFieldRow();
-      customFieldsContainer.insertAdjacentHTML('beforeend', newFieldHTML);
-    });
+    addCustomFieldBtn.addEventListener('click', createFieldRow);
   }
+
+  document.querySelectorAll('.custom-field-type').forEach(applyFieldLogic);
 
   document.addEventListener('change', (e) => {
     if (e.target.classList.contains('custom-field-type')) {
-      const row = e.target.closest('.custom-field');
-      const defaultInput = row.querySelector('.custom-field-value');
-      if (e.target.value === 'yesno') {
-        defaultInput.style.display = 'none';
-        defaultInput.value = '';
-      } else {
-        defaultInput.style.display = '';
-      }
+      applyFieldLogic(e.target);
     }
   });
 

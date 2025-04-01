@@ -298,6 +298,32 @@ html, body {
   border: 1px solid var(--card-border);
 }
 
+[data-theme="dark"] .alert-success {
+  background-color: #264d3b;
+  color: #c2f1d6;
+  border: 1px solid #3a7253;
+}
+
+[data-theme="dark"] .btn-close {
+  filter: invert(1);
+}
+
+.no-habits-container {
+  color: var(--text-color);
+}
+
+.no-habits-card {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  max-width: 500px;
+  border: 1px solid var(--card-border);
+}
+
+[data-theme="dark"] .no-habits-card {
+  background-color: var(--sidebar-bg);
+  border: 1px solid var(--card-border);
+}
+
 .info-card .btn {
   font-size: 1.1rem;
   padding: 0.5rem 1.5rem;
@@ -405,6 +431,7 @@ html, body {
 .template-card {
   min-height: 150px;
 }
+
 [data-theme="dark"] .template-card {
   background-color: #444 !important;
   color: #fff !important;

@@ -11,5 +11,7 @@ urlpatterns = [
     path('insert/<int:habit_id>/', views.insert_data_view, name='insert_data'),
     
     path('notifications/', views.notification_dashboard_view, name='notification_dashboard'),
-    path('notifications/push/', views.push_notification, name='push_notification')
+    path('notifications/push/', views.push_notification, name='push_notification'),
+    path('api/save-custom-data/<int:habit_id>/', views.save_custom_data_api, name='save_custom_data_api'),
+    path('api/record/<int:record_id>/', views.get_record_data_api, name='get_record_data_api'),
 ]

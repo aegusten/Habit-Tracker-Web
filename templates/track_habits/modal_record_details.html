@@ -1,11 +1,46 @@
 <div class="modal fade" id="recordModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" id="modalContent">
-      <div class="modal-header">
-        <h5 class="modal-title" id="recordModalLabel">Record Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-content" style="background-color: var(--card-bg); color: var(--text-color); border-radius: 0.75rem;">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold" id="recordModalLabel">Record Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" id="recordModalBody"></div>
+      <div class="modal-body" id="recordModalBody">
+
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".record-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const recordId = item.dataset.record;
+        fetch(`/habits/api/record/${recordId}/`)
+          .then(res => res.json())
+          .then(data => {
+            const label = `Record Details (${data.date})`;
+            document.getElementById("recordModalLabel").textContent = label;
+
+            if (Object.keys(data.data).length === 0) {
+              document.getElementById("recordModalBody").innerHTML = "<p class='text-muted'>No data found.</p>";
+              return;
+            }
+
+            let html = '<div class="list-group">';
+            for (const [key, val] of Object.entries(data.data)) {
+              html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center"
+                    style="background-color: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                  <span class="fw-semibold text-capitalize">${key.replace(/_/g, ' ')}</span>
+                  <span class="badge bg-primary rounded-pill px-3 py-1">${value}</span>
+                </div>`;
+            }
+            html += "</div>";
+            document.getElementById("recordModalBody").innerHTML = html;
+          });
+      });
+    });
+  });
+</script>
