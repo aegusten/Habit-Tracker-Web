@@ -1,4 +1,5 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en" data-theme="light"
       class="{% if request.user.is_authenticated %}auth{% endif %}">
@@ -53,6 +54,8 @@
     <footer class="footer text-center p-4">
       <p class="mb-0">© 2025 MyHabitTracker. All rights reserved.</p>
     </footer>
+
+    {% block extra_body %}{% endblock %}
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
