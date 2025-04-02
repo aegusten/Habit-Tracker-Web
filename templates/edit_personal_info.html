@@ -164,5 +164,10 @@
     </div>
   </div>
 </div>
+<script>
+  const CHANGE_PASSWORD_URL = "{% url 'accounts:change_password' %}";
+  const VERIFY_SECURITY_URL = "{% url 'accounts:verify_security_answers' %}";
+  const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
 <script src="{% static 'js/edit_personal_details.js' %}"></script>
 {% endblock %}

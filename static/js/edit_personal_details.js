@@ -46,9 +46,9 @@ document.addEventListener("DOMContentLoaded", function () {
     };
     verifyOldBtn.onclick = () => {
         oldPwError.textContent = '';
-        fetch("{% url 'accounts:change_password' %}", {
+        fetch(CHANGE_PASSWORD_URL, {
             method: 'POST',
-            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+            headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' },
             body: JSON.stringify({ old_password: oldPassword.value, new_password1: '', new_password2: '' })
         })
         .then(response => response.json())
@@ -66,15 +66,16 @@ document.addEventListener("DOMContentLoaded", function () {
             oldPwError.textContent = 'Server error. Please try again.';
         });
     };
+
     verifySecBtn.onclick = () => {
         secError.textContent = '';
         let answers = {};
         document.querySelectorAll('.secAnswer').forEach(el => {
             answers[el.dataset.question] = el.value.trim();
         });
-        fetch("{% url 'accounts:verify_security_answers' %}", {
+        fetch(VERIFY_SECURITY_URL, {
             method: 'POST',
-            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+            headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' },
             body: JSON.stringify(answers)
         })
         .then(response => response.json())
@@ -91,20 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
             secError.textContent = 'Server error. Please try again.';
         });
     };
-    backStep3.onclick = () => {
-        if (method === 'old') {
-            step3.classList.add('d-none');
-            step2Old.classList.remove('d-none');
-            progress.style.width = '66%';
-        } else {
-            step3.classList.add('d-none');
-            step2Sec.classList.remove('d-none');
-            progress.style.width = '66%';
-        }
-        newPassErrors.textContent = '';
-        document.querySelector('[name="new_password1"]').value = '';
-        document.querySelector('[name="new_password2"]').value = '';
-    };
+
     btnUpdatePw.onclick = () => {
         newPassErrors.textContent = '';
         const pw1 = document.querySelector('[name="new_password1"]').value;
@@ -115,9 +103,9 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             payload.verify = '1';
         }
-        fetch("{% url 'accounts:change_password' %}", {
+        fetch(CHANGE_PASSWORD_URL, {
             method: 'POST',
-            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+            headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
         .then(response => response.json())
