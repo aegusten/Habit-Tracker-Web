@@ -83,18 +83,29 @@ document.addEventListener('DOMContentLoaded', () => {
           <input type="text" name="custom_field_value[]" class="form-control custom-field-value" placeholder="(optional)">
         </div>
         <div class="col-md-1 text-end mt-4">
-          <button type="button" class="btn btn-outline-danger btn-sm mt-2" data-field-id="${fieldId}">Remove</button>
+          <button type="button" class="btn btn-outline-danger btn-sm mt-2 remove-field" data-field-id="${fieldId}">Remove</button>
         </div>
       </div>`;
     customFieldsContainer.insertAdjacentHTML('beforeend', html);
+  
     const newRow = document.getElementById(fieldId);
     const select = newRow.querySelector('.custom-field-type');
     applyFieldLogic(select);
-  }
+  }  
 
   if (addCustomFieldBtn) {
     addCustomFieldBtn.addEventListener('click', createFieldRow);
   }
+
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-field')) {
+      const fieldId = e.target.getAttribute('data-field-id');
+      const fieldRow = document.getElementById(fieldId);
+      if (fieldRow) {
+        fieldRow.remove();
+      }
+    }
+  });  
 
   document.querySelectorAll('.custom-field-type').forEach(applyFieldLogic);
 

@@ -94,3 +94,23 @@ class HabitRecord(models.Model):
 
     def __str__(self):
         return f"{self.habit.name} on {self.date}"
+
+class HabitAchievement(models.Model):
+    BADGE_CHOICES = [
+        ('silver_badge', 'Silver'),
+        ('gold_badge', 'Gold'),
+        ('platinum_badge', 'Platinum'),
+        ('streak_10_badge', '10-Day Streak'),
+        ('completed_preset_badge', 'Completed Preset'),
+    ]
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    habit = models.ForeignKey('Habit', on_delete=models.CASCADE)
+    badge_type = models.CharField(max_length=50, choices=BADGE_CHOICES)
+    is_active = models.BooleanField(default=True)
+    awarded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'habit', 'badge_type')
+
+    def __str__(self):
+        return f"{self.user} - {self.habit} - {self.badge_type}"

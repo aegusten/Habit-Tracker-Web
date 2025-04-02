@@ -1,0 +1,31 @@
+<div class="modal fade" id="insightModal" tabindex="-1" aria-labelledby="insightModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="insightModalLabel">Detailed Insights</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          {% for field in numeric_fields %}
+          <div class="col-md-6 mb-4">
+            <h6 class="fw-semibold">{{ field|cut:"_"|title }}</h6>
+      
+            {% if habit.insights_method == "graph" or habit.insights_method == "both" %}
+            <div class="chart-container" style="height: 250px;">
+              <canvas id="modalGraph_{{ forloop.counter }}"></canvas>
+            </div>
+            {% endif %}
+      
+            {% if habit.insights_method == "chart" or habit.insights_method == "both" %}
+            <div class="chart-container mt-3" style="height: 250px;">
+              <canvas id="modalChart_{{ forloop.counter }}"></canvas>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>      
+    </div>
+  </div>
+</div>
