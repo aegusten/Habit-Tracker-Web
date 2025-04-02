@@ -3,7 +3,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
-
+from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from habits.models import Habit
 from django.contrib import messages
@@ -267,3 +267,14 @@ def profile_view(request):
         'consistency_badge': all_logs >= 20
     }
     return render(request, 'edit_personal_info.html', context)
+
+@csrf_exempt
+def get_security_questions_view(request):
+    data = json.loads(request.body)
+    id_number = data.get('id_number', '').strip()
+    user = User.objects.filter(id_number=id_number).first()
+    if not user:
+        return JsonResponse({"questions": []})
+    user_answers = UserSecurityAnswer.objects.filter(user=user)
+    questions = [ua.question_text for ua in user_answers]
+    return JsonResponse({"questions": questions})
