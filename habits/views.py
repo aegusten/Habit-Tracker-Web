@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from django.utils.timezone import now
 from .achievements import (
     compute_habit_achievements,
+    compute_user_achievements,
     award_habit_badge,
 )
 import json
@@ -81,6 +82,7 @@ def form_new_habit_view(request):
                         'importance': importance
                     }
             habit.save()
+            compute_user_achievements(request.user)
             return redirect('habits:ongoing_habit')
     else:
         form = HabitForm()
@@ -139,9 +141,10 @@ def insert_data_view(request, habit_id):
             habit.check_wake_up_early_progress()
         elif habit.template_key == 'eat_healthy':
             habit.check_eat_healthy_progress()
-        habit.streak += 15  #1
-        habit.points += 15 #1
+        habit.streak += 1
+        habit.points += 1 
         habit.save()
+        compute_user_achievements(request.user)
         message_index = min(habit.streak - 1, 4)
         habit_type = habit.template_key or 'custom'
         message = AWARD_MESSAGES.get(habit_type, AWARD_MESSAGES['custom'])[message_index]
