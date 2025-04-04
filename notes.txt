@@ -14,18 +14,3 @@ docker-compose exec web python manage.py makemigrations habits
 docker-compose exec web python manage.py migrate
 
 ----------
-MAIN ->
-docker-compose down -v
-docker-compose up --build
-
-docker-compose exec web python manage.py migrate
-
-docker-compose exec web python manage.py migrate django_celery_beat
-
--------------------
-Verify Demo‑Mode Notifications
-
-docker-compose exec web python manage.py shell
-
-from habits.tasks import send_reminder_notifications
-send_reminder_notifications()

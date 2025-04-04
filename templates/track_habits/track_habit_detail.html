@@ -4,7 +4,7 @@
 
 <div class="container py-4" style="max-width: 1000px;">
   <div class="text-center mb-4">
-    <h2 class="fw-bold">Track Habit: <span class="text-primary">{{ habit.name }}</span></h2>
+    <h2 class="fw-bold dark:text-white">Track Habit: <span class="text-primary">{{ habit.name }}</span></h2>
   </div>
 
   {% if messages %}
@@ -19,251 +19,59 @@
     </div>
   {% endif %}
 
-  {% if streak >= 10 %}
-  <div class="card text-center shadow-sm mb-3 p-3">
-    <img src="{% static 'icons/streak_10.png' %}" alt="10-Day Streak" width="64">
-    <h5 class="fw-bold mt-2">🗕️ 10-Day Streak</h5>
-    <p class="text-muted small mb-0">You’ve logged 10 days in a row!</p>
-  </div>
-  {% endif %}
-
-  {% if habit.template_key and habit.achieved %}
-  <div class="card text-center shadow-sm mb-3 p-3">
-    <img src="{% static 'icons/completed_preset.png' %}" alt="Completed Habit" width="64">
-    <h5 class="fw-bold mt-2">✅ Completed Prepared Habit</h5>
-    <p class="text-muted small mb-0">You’ve completed a preset goal!</p>
-  </div>
-  {% endif %}
+  {% include 'utils/habit_badge_highlights.html' %}
 
   <div class="row g-3">
-    <div class="col-md-6">
-      <div class="card h-100 text-center p-3">
-        <i class="bi bi-fire text-danger fs-2"></i>
-        <h5 class="fw-semibold mt-2">Streak</h5>
-        <p class="display-6 text-danger fw-bold">{{ streak }}</p>
-        <small class="text-muted">Current Streak (days)</small>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="card h-100 text-center p-3">
-        <i class="bi bi-trophy-fill text-success fs-2"></i>
-        <h5 class="fw-semibold mt-2">Points</h5>
-        <p class="display-6 text-success fw-bold">{{ total_points }}</p>
-        <small class="text-muted">
-          {% if badge %} Badge Earned: <strong>{{ badge }}</strong>
-          {% else %} No Badge Earned Yet {% endif %}
-        </small>
-      </div>
-    </div>
-
-    <div class="col-md-6">
-      <div class="card h-100 text-center p-3">
-        <i class="bi bi-hourglass-split text-warning fs-2"></i>
-        <h5 class="fw-semibold mt-2">Upcoming Challenges</h5>
-        <p class="display-6 text-warning fw-bold">{{ days_remaining }}</p>
-        <small class="text-muted d-block">Days Remaining</small>
-        <p class="mt-2">
-          Next Badge:
-          <strong class="text-primary">
-            {% if total_points < 75 %}
-              Silver (75 pts)
-            {% elif total_points < 150 %}
-              Gold (150 pts)
-            {% else %}
-              Platinum (Achieved)
-            {% endif %}
-          </strong>
-        </p>
-      </div>
-    </div>
+    {% include 'utils/habit_summary_header.html' %}
 
     <div class="col-md-6">
       <div class="card h-100 p-3">
         <div class="d-flex align-items-center mb-2">
           <i class="bi bi-graph-up-arrow text-info fs-4 me-2"></i>
-          <h5 class="fw-semibold mb-0">Insights</h5>
+          <h5 class="fw-semibold mb-0 dark:text-white">Insights</h5>
         </div>
+
         {% if not numeric_fields %}
-            <div class="text-muted text-center">No numeric insights to display yet.</div>
+          <div class="text-muted text-center dark:text-white">No numeric insights to display yet.</div>
         {% endif %}
 
-        <div style="height: 200px;">
+        <div class="chart-wrapper">
           <canvas id="habitChart"></canvas>
+
+          <script id="chart-data" type="application/json">
+            {{ chart_data|safe }}
+          </script>
+          <script id="chart-fields" type="application/json">
+            {{ numeric_fields|safe }}
+          </script>
+          <script id="chart-method" type="application/json">
+            "{{ habit.insights_method }}"
+          </script>
         </div>
-        <small class="text-muted d-block mt-2">
+
+        <small class="text-muted d-block mt-2 dark:text-white">
           Committed Days: <strong>{{ committed_days }}</strong> | Days Left: <strong>{{ days_remaining }}</strong>
         </small>
         <a href="#" class="stretched-link" data-bs-toggle="modal" data-bs-target="#insightModal"></a>
       </div>
     </div>
 
-    <div class="col-md-6">
-      <div class="card p-3 h-100">
-        <div class="d-flex align-items-center mb-2">
-          <i class="bi bi-alarm text-danger fs-4 me-2"></i>
-          <h5 class="fw-semibold mb-0">Reminder Settings</h5>
-        </div>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="form_type" value="reminder">
-            <div class="form-group mb-3">
-              <label class="fw-semibold">Reminder Frequency</label>
-              <select name="reminder_frequency" class="form-control rounded-3">
-                <option value="daily" {% if habit.motivational_reminder == 'daily' %}selected{% endif %}>Daily</option>
-                <option value="weekly" {% if habit.motivational_reminder == 'weekly' %}selected{% endif %}>Weekly</option>
-              </select>
-            </div>
-            <button 
-                type="submit" class="btn btn-outline-danger w-100">Update Reminder
-            </button>
-          </form>
-      </div>
-    </div>
-
-    <div class="col-md-6">
-      <div class="card p-3 h-100">
-        <div class="d-flex align-items-center mb-2">
-          <i class="bi bi-flag-fill text-primary fs-4 me-2"></i>
-          <h5 class="fw-semibold mb-0">Goal Timeline</h5>
-        </div>
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="form_type" value="timeline">
-            <div class="form-group mb-3">
-              <label class="fw-semibold">Goal Duration</label>
-              <select name="timeline" class="form-control rounded-3">
-                <option value="1" {% if habit.timeline == '1' %}selected{% endif %}>1 Month</option>
-                <option value="2" {% if habit.timeline == '2' %}selected{% endif %}>2 Months</option>
-              </select>
-            </div>
-            <button 
-                type="submit" class="btn btn-outline-primary w-100">Update Goal
-            </button>
-          </form>
-      </div>
-    </div>
+    {% include 'utils/habit_edit_forms.html' %}
   </div>
+  {% with key=habit.template_key|default:"custom" %}
+    {% include "track_habits/insights/"|add:key|add:".html" %}
+  {% endwith %}
 
-
- <div class="modal fade" id="insightModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content p-3 rounded-4">
-      <div class="modal-header border-0">
-        <h5 class="modal-title fw-bold">Detailed Insights</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        {% if numeric_fields %}
-        <div class="row gx-4 gy-3 justify-content-center" style="max-height: 400px; overflow-y: auto;">
-          {% for field in numeric_fields %}
-            {% if habit.insights_method == 'both' or forloop.first %}
-              <div class="{% if habit.insights_method == 'both' %}col-md-6 border-end{% else %}col-12{% endif %}">
-                <h6 class="fw-semibold mb-2">{{ field|cut:"_"|title }}</h6>
-                <canvas id="modalChart_{{ forloop.counter }}" height="180" style="max-width: 100%;"></canvas>
-              </div>
-            {% endif %}
-          {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-muted text-center">No insights to show yet.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
- </div>
 </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const chartData = {{ chart_data|safe }};
-    const labels = chartData.map(row => row.date);
-    const selectedFields = [];
-    {% for field in numeric_fields %}
-      {% if habit.insights_method == 'both' or forloop.first %}
-        selectedFields.push("{{ field }}");
-      {% endif %}
-    {% endfor %}
-  
-    const datasets = selectedFields.map(field => {
-      const values = chartData.map(row => row[field]);
-      return {
-        label: field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        data: values,
-        borderColor: 'rgba(75, 192, 192, 1)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        tension: 0.2,
-        fill: true
-      };
-    });
-  
-    const habitChartCanvas = document.getElementById('habitChart');
-    if (habitChartCanvas) {
-      const ctx = habitChartCanvas.getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          aspectRatio: 2,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              beginAtZero: false
-            }
-          }
-        }
-      });
-    }
-  
-    const insightModal = document.getElementById('insightModal');
-    if (insightModal) {
-      insightModal.addEventListener('shown.bs.modal', () => {
-        selectedFields.forEach((field, idx) => {
-          const canvas = document.getElementById(`modalChart_${idx + 1}`);
-          if (canvas && canvas.dataset.rendered !== "true") {
-            canvas.dataset.rendered = "true";
-            const values = chartData.map(row => row[field]);
-            new Chart(canvas, {
-              type: 'line',
-              data: {
-                labels,
-                datasets: [{
-                  label: field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                  data: values,
-                  borderColor: 'rgba(54, 162, 235, 1)',
-                  backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                  fill: true,
-                  tension: 0.3
-                }]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                aspectRatio: 2,
-                plugins: { legend: { display: true } },
-                scales: {
-                  y: { beginAtZero: false }
-                }
-              }
-            });
-          }
-        });
-      });
-    }
-  
-    setTimeout(() => {
-      document.querySelectorAll('.alert').forEach(alert => {
-        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-        bsAlert.close();
-      });
-    }, 4000);
-  });
-  </script>
-  
-  
+{% block extra_body %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script id="chart-data" type="application/json">{{ chart_data|safe }}</script>
+<script id="chart-fields" type="application/json">{{ numeric_fields|safe }}</script>
+<script id="chart-method" type="application/json">"{{ insights_method }}"</script>
 
-  
-  
+<script src="{% static 'js/profile.js' %}"></script>
+<script src="{% static 'js/insights/'|add:habit.template_key|default:'custom'|add:'.js' %}"></script>
+{% endblock %}
 
 {% endblock %}

@@ -1,0 +1,37 @@
+{% load static %}
+<div class="card shadow-sm border-0 mb-4 rounded-4">
+  <div class="card-body">
+    <h5 class="fw-semibold mb-3">
+      <i class="bi bi-trophy-fill me-2 text-success"></i> Achievements
+    </h5>
+    <ul class="list-group list-group-flush">
+      {% if user_badges.login_streak_badge %}
+      <li class="list-group-item d-flex align-items-center">
+        <img src="{% static 'icons/login_badge.png' %}" alt="Login Badge" width="32" class="me-2">
+        Login Streak Achieved
+      </li>
+      {% endif %}
+      {% if user_badges.consistency_badge %}
+      <li class="list-group-item d-flex align-items-center">
+        <img src="{% static 'icons/consistency_badge.png' %}" alt="Consistency Badge" width="32" class="me-2">
+        Consistency Achieved
+      </li>
+      {% endif %}
+      {% if user_badges.first_win_badge %}
+      <li class="list-group-item d-flex align-items-center">
+        <img src="{% static 'icons/first_win_badge.png' %}" alt="First Win Badge" width="32" class="me-2">
+        First Win Achieved
+      </li>
+      {% endif %}
+      {% if user_badges.triple_habit_badge %}
+      <li class="list-group-item d-flex align-items-center">
+        <img src="{% static 'icons/triple_habit_badge.png' %}" alt="Triple Habit Badge" width="32" class="me-2">
+        Triple Habit Achieved
+      </li>
+      {% endif %}
+      {% if not user_badges.login_streak_badge and not user_badges.consistency_badge and not user_badges.first_win_badge and not user_badges.triple_habit_badge %}
+      <li class="list-group-item">No achievements earned yet.</li>
+      {% endif %}
+    </ul>
+  </div>
+</div>

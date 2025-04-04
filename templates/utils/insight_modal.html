@@ -1,0 +1,31 @@
+{% load static %}
+
+{% if numeric_fields %}
+  <div class="row gx-4 gy-3 justify-content-center">
+
+    {% if habit.insights_method == "chart" or habit.insights_method == "both" %}
+      {% for field in numeric_fields %}
+      <div class="col-md-6">
+        <h6 class="fw-semibold mb-2">{{ field|cut:"_"|title }} (Chart)</h6>
+        <div class="chart-container mb-4">
+          <canvas id="modalChart_{{ forloop.counter }}"></canvas>
+        </div>
+      </div>
+      {% endfor %}
+    {% endif %}
+
+    {% if habit.insights_method == "graph" or habit.insights_method == "both" %}
+      {% for field in numeric_fields %}
+      <div class="col-md-6">
+        <h6 class="fw-semibold mb-2">{{ field|cut:"_"|title }} (Graph)</h6>
+        <div class="chart-container mb-4">
+          <canvas id="modalGraph_{{ forloop.counter }}"></canvas>
+        </div>
+      </div>
+      {% endfor %}
+    {% endif %}
+
+  </div>
+{% else %}
+  <p class="text-muted text-center">No insights to show yet.</p>
+{% endif %}

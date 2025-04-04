@@ -12,6 +12,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     age = models.PositiveIntegerField(null=True, blank=True)
     date_joined = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
+    login_count = models.PositiveIntegerField(default=0)
 
     objects = UserManager()
 
@@ -50,9 +51,20 @@ class UserSecurityAnswer(models.Model):
     def __str__(self):
         return f"{self.user.id_number} - {self.question.question_text}"
     
-class LoginActivity(models.Model):
+class UserAchievement(models.Model):
+    BADGE_CHOICES = [
+        ('login_streak_badge', 'Login Streak'),
+        ('consistency_badge', 'Consistency'),
+        ('first_win_badge', 'First Win'),
+        ('triple_habit_badge', 'Triple Habit'),
+    ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(default=now)
+    badge_type = models.CharField(max_length=50, choices=BADGE_CHOICES)
+    is_active = models.BooleanField(default=True)
+    awarded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'badge_type')
 
     def __str__(self):
-        return f"{self.user.id_number} - {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+        return f"{self.user.id_number} - {self.badge_type}"

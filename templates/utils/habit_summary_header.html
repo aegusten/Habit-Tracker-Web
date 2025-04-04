@@ -1,0 +1,39 @@
+<div class="col-md-6">
+    <div class="card h-100 text-center p-3">
+      <i class="bi bi-fire text-danger fs-2"></i>
+      <h5 class="fw-semibold mt-2 dark:text-white">Streak</h5>
+      <p class="display-6 text-danger fw-bold">{{ streak }}</p>
+      <small class="text-muted dark:text-white">Current Streak (days)</small>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100 text-center p-3">
+      <i class="bi bi-trophy-fill text-success fs-2"></i>
+      <h5 class="fw-semibold mt-2 dark:text-white">Points</h5>
+      <p class="display-6 text-success fw-bold">{{ total_points }}</p>
+      <small class="text-muted dark:text-white">
+        {% if badge %} Badge Earned: <strong class="dark:text-white">{{ badge }}</strong>
+        {% else %} No Badge Earned Yet {% endif %}
+      </small>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100 text-center p-4 d-flex flex-column justify-content-center align-items-center">
+      <i class="bi bi-hourglass-split text-warning fs-2 mb-2"></i>
+      <h5 class="fw-semibold dark:text-white">Upcoming Challenges</h5>
+  
+      {% if points_needed > 0 %}
+        <p class="display-6 text-warning fw-bold">{{ days_remaining }}</p>
+        <small class="text-muted dark:text-white d-block mb-2">Estimated Days Remaining</small>
+        <p class="mt-2 mb-0 dark:text-white">
+          Next Badge:
+          <strong class="text-primary">{{ next_badge }} ({{ points_needed }} pts)</strong>
+        </p>
+      {% else %}
+        <p class="text-success fw-bold fs-5 mb-3 dark:text-white">You've earned the highest badge!</p>
+        <img src="{{ badge_icon }}" alt="{{ badge }} Badge" width="48">
+      {% endif %}
+    </div>
+  </div>
+  

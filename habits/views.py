@@ -5,7 +5,11 @@ from urllib.parse import urlencode
 from django.templatetags.static import static
 from django.views.decorators.http import require_POST
 from django.utils.timezone import now
-
+from .achievements import (
+    compute_habit_achievements,
+    award_habit_badge,
+)
+import json
 from django.contrib import messages
 from django.utils import timezone
 from .forms import HabitForm
@@ -135,8 +139,8 @@ def insert_data_view(request, habit_id):
             habit.check_wake_up_early_progress()
         elif habit.template_key == 'eat_healthy':
             habit.check_eat_healthy_progress()
-        habit.streak += 1
-        habit.points += 1
+        habit.streak += 15  #1
+        habit.points += 15 #1
         habit.save()
         message_index = min(habit.streak - 1, 4)
         habit_type = habit.template_key or 'custom'
@@ -156,6 +160,7 @@ def insert_data_view(request, habit_id):
 def track_habit_detail_view(request, habit_id):
     habit = get_object_or_404(Habit, id=habit_id, user=request.user)
     habit_records = HabitRecord.objects.filter(habit=habit).order_by("date")
+
     if request.method == "POST":
         form_type = request.POST.get("form_type")
         if form_type == "reminder":
@@ -171,40 +176,40 @@ def track_habit_detail_view(request, habit_id):
                 habit.save()
                 messages.success(request, "Goal timeline updated successfully.")
         return redirect("habits:track_habit_detail", habit_id=habit.id)
-    numeric_fields = []
-    for key, info in habit.metrics.items():
-        if info.get('importance') in ['daily_required', 'daily_optional'] and info.get('type') == 'number':
-            numeric_fields.append(key)
+
+    numeric_fields = [
+        key for key, info in habit.metrics.items()
+        if info.get('importance') in ['daily_required', 'daily_optional']
+        and info.get('type') == 'number'
+    ]
+
     chart_data = []
     for rec in habit_records:
         row = {'date': rec.date.strftime('%Y-%m-%d')}
-        for nf in numeric_fields:
-            val_str = rec.data.get(nf, '0')
+        for field in numeric_fields:
             try:
-                row[nf] = float(val_str)
-            except ValueError:
-                row[nf] = 0.0
+                row[field] = float(rec.data.get(field, 0))
+            except (ValueError, TypeError):
+                row[field] = 0.0
         chart_data.append(row)
-    streak = habit.streak
+
     total_points = habit.points
+    streak = habit.streak
     committed_days = habit.streak
     total_days = int(habit.timeline) * 30
     days_remaining = max(total_days - committed_days, 0)
-    badge = None
-    badge_icon = None
+
+    badge = badge_icon = None
     if total_points >= 150:
         badge = "Platinum"
         badge_icon = static('icons/platinum_badge.png')
-        if not habit.achieved:
-            habit.achieved = True
-            habit.achieved_date = now().date()
-            habit.save()
     elif total_points >= 75:
         badge = "Gold"
         badge_icon = static('icons/gold_badge.png')
     elif total_points > 0:
         badge = "Silver"
         badge_icon = static('icons/silver_badge.png')
+
     if total_points < 75:
         next_badge = "Silver"
         next_badge_icon = static('icons/silver_badge.png')
@@ -217,11 +222,25 @@ def track_habit_detail_view(request, habit_id):
         next_badge = "Platinum"
         next_badge_icon = static('icons/platinum_badge.png')
         points_needed = 0
+
+    if total_points >= 150 and not habit.achieved:
+        habit.achieved = True
+        habit.achieved_date = now().date()
+        habit.save()
+
+    habit_badges = compute_habit_achievements(habit)
+
+    chart_data_json = json.dumps(chart_data)
+    numeric_fields_json = json.dumps(numeric_fields)
+
     return render(request, 'track_habits/track_habit_detail.html', {
         "habit": habit,
         "habit_records": habit_records,
-        "chart_data": chart_data,
-        "numeric_fields": numeric_fields,
+        "chart_data": chart_data_json,                 
+        "numeric_fields": numeric_fields_json,          
+        "numeric_fields_list": numeric_fields,         
+        "insights_method": habit.insights_method or "chart",
+
         "streak": streak,
         "total_points": total_points,
         "badge": badge,
@@ -231,7 +250,8 @@ def track_habit_detail_view(request, habit_id):
         "points_needed": points_needed,
         "committed_days": committed_days,
         "days_remaining": days_remaining,
-        "achieved": habit.achieved
+        "achieved": habit.achieved,
+        "habit_badges": habit_badges,
     })
 
 @login_required

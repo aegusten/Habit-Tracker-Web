@@ -4,7 +4,7 @@ PRESET_HABITS = {
             {'key': 'cigarettes_per_day', 'label': 'Cigarettes per Day', 'type': 'number'},
             {'key': 'craving_level', 'label': 'Craving Level (1-10)', 'type': 'number'},
             {'key': 'planned_quit_date', 'label': 'Planned Quit Date', 'type': 'date'},
-            {'key': 'nicotine_replacement', 'label': 'Nicotine Replacement', 'type': 'text'},
+            {'key': 'nicotine_replacement', 'label': 'Replacements', 'type': 'text'},
             {'key': 'trigger_coping', 'label': 'Triggers & Coping Strategies', 'type': 'text'}
         ]
     },

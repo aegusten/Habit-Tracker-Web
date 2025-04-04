@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
 from django.views.decorators.csrf import csrf_exempt
+from habits.achievements import (
+    compute_user_achievements,
+    award_user_badge,
+)
+    
 from django.http import JsonResponse
 from habits.models import Habit
 from django.contrib import messages
@@ -17,20 +22,10 @@ from .models import (
     UserSecurityAnswer,
     SecurityQuestion,
     User,
-    LoginActivity,
     UserProfile,
 )
 
 from habits.models import HabitRecord
-
-from habits.utils import (
-    PRESET_HABITS,
-    PRESET_TEMPLATES,
-    AWARD_MESSAGES,
-    NOTIFICATION_MESSAGES,
-    get_notification_message,
-    get_random_reminder
-)
 
 import json
 from .forms import RegisterForm, LoginForm, UpdatePersonalInfoForm
@@ -42,38 +37,30 @@ def index_view(request):
 def main_menu_view(request):
     user = request.user
     habits = Habit.objects.filter(user=user)
-
-    habit_summary = {
-        'daily': [],
-        'weekly': []
-    }
-
+    habit_summary = {'daily': [], 'weekly': []}
+    
     for habit in habits:
+        if habit.achieved:
+            continue
+        
         habit_type = habit.template_key or 'custom'
         reminder = habit.motivational_reminder
-        print(f"[DEBUG] Habit: {habit.name}, Type: {habit_type}, Reminder: {reminder}")
-
+        
         if reminder == 'daily':
             habit_summary['daily'].append(habit_type)
+            
         elif reminder == 'weekly':
             habit_summary['weekly'].append(habit_type)
-
+            
     habit_summary['daily'] = list(set(habit_summary['daily']))
     habit_summary['weekly'] = list(set(habit_summary['weekly']))
     
-    profile, _ = UserProfile.objects.get_or_create(user=user)
-    show_notifications = profile.notifications_enabled
-
-    print(f"[SUMMARY] Total Habits: {habits.count()}")
-    print(f"[SUMMARY] Daily Types: {habit_summary['daily']}")
-    print(f"[SUMMARY] Weekly Types: {habit_summary['weekly']}")
-
     return render(request, 'main_menu.html', {
         'daily_habit_types': habit_summary['daily'],
         'weekly_habit_types': habit_summary['weekly'],
         'habit_count': habits.count(),
-        'show_notifications': show_notifications,
     })
+
 
 def logout_view(request):
     logout(request)
@@ -126,8 +113,10 @@ def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request=request, data=request.POST)
         if form.is_valid():
-            login(request, form.get_user())
-            LoginActivity.objects.create(user=form.get_user())
+            user = form.get_user()
+            user.login_count += 1
+            user.save()
+            login(request, user)
             return redirect('accounts:main_menu')
     else:
         form = LoginForm()
@@ -179,7 +168,6 @@ def public_verify_security_answers(request):
             correct += 1
     return JsonResponse({'valid': correct >= 2})
 
-
 @login_required
 def change_password_view(request):
     user = request.user
@@ -222,10 +210,9 @@ def edit_personal_info_view(request):
     password_form = PasswordChangeForm(user=user)
     set_password_form = SetPasswordForm(user=user)
     
-    recent_logins = LoginActivity.objects.filter(user=user).order_by('-timestamp')[:5]
-    
     user_answers = user.security_answers.all()
     questions = {ua.question_text: ua.answer for ua in user_answers}
+    
     if request.method == 'POST' and form.is_valid():
         form.save()
         return redirect('accounts:edit_personal_info')
@@ -235,36 +222,25 @@ def edit_personal_info_view(request):
         'password_form': password_form,
         'set_password_form': set_password_form,
         'security_questions': questions,
-        'recent_logins': recent_logins,
+        'recent_logins': []
     }
     return render(request, 'edit_personal_info.html', context)
 
 @login_required
-def verify_security_answers(request):
-    data = json.loads(request.body)
-    user = request.user
-    user_answers = user.security_answers.all()
-    correct = 0
-    for ua in user_answers:
-        submitted = data.get(ua.question_text, "").strip().lower()
-        if ua.answer.strip().lower() == submitted:
-            correct += 1
-    return JsonResponse({'valid': correct >= 2})
-
-@login_required
 def profile_view(request):
     user = request.user
-    login_count = LoginActivity.objects.filter(user=user).count()
+    login_count = user.login_count
     habits = Habit.objects.filter(user=user)
     completed_prepared = habits.filter(achieved=True, template_key__isnull=False).count()
     completed_any = habits.filter(achieved=True).exists()
     all_logs = HabitRecord.objects.filter(habit__user=user).values('date').distinct().count()
-
+    user_badges = compute_user_achievements(user)
     context = {
-        'login_badge': login_count >= 20,
+        'login_badge': login_count >= 10,
         'triple_finisher_badge': completed_prepared >= 3,
         'first_win_badge': completed_any,
-        'consistency_badge': all_logs >= 20
+        'consistency_badge': all_logs >= 20,
+        'user_badges': user_badges,
     }
     return render(request, 'edit_personal_info.html', context)
 
