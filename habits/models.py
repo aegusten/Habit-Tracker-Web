@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils.timezone import now
 from django.apps import apps
-
+        
 class Habit(models.Model):
     TIMELINE_CHOICES = [('1', '1 Month'), ('2', '2 Months')]
     REMINDER_CHOICES = [('daily', 'Daily'), ('weekly', 'Weekly')]
@@ -82,6 +82,16 @@ class Habit(models.Model):
             else:
                 break
         if success_streak >= success_streak_needed and not self.achieved:
+            self.achieved = True
+            self.achieved_date = now().date()
+            self.save()
+            
+    def check_timeline_completion(self):
+
+        HabitRecord = apps.get_model('habits', 'HabitRecord')
+        required_days = 30 if self.timeline == '1' else 60
+        total_logs = HabitRecord.objects.filter(habit=self).count()
+        if total_logs >= required_days and not self.achieved:
             self.achieved = True
             self.achieved_date = now().date()
             self.save()

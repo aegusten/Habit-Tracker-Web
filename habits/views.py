@@ -98,55 +98,67 @@ def ongoing_habit_view(request):
 @login_required
 def insert_data_view(request, habit_id):
     habit = get_object_or_404(Habit, pk=habit_id, user=request.user)
-    records = HabitRecord.objects.filter(habit=habit).order_by('-date')
+    records = HabitRecord.objects.filter(habit=habit).order_by('date')
+    skipped = False
     if records.exists():
-        next_date = records.first().date + timezone.timedelta(days=1)
+        for i in range(len(records) - 1):
+            if (records[i+1].date - records[i].date).days > 1:
+                skipped = True
+                break
+        last_date = records.last().date
+        next_date = last_date + timezone.timedelta(days=1)
     else:
         next_date = timezone.now().date()
-    preset_fields = []
-    custom_fields = []
-    static_display_fields = []
+
+    preset_fields, custom_fields, static_display_fields = [], [], []
     PRESET_KEYS = [
-        'cigarettes_per_day', 'craving_level', 'planned_quit_date', 'nicotine_replacement',
-        'trigger_coping', 'current_wake_time', 'desired_wake_time', 'bedtime', 'sleep_quality',
-        'snooze_count', 'daily_calorie_target', 'fruit_veg_target', 'water_intake_goal',
-        'junk_food_consumption'
+        'cigarettes_per_day','craving_level','planned_quit_date','nicotine_replacement','trigger_coping',
+        'current_wake_time','desired_wake_time','bedtime','sleep_quality','snooze_count',
+        'daily_calorie_target','fruit_veg_target','water_intake_goal','junk_food_consumption'
     ]
     for field_name, info in habit.metrics.items():
         imp = info.get('importance', 'daily_optional')
         if imp == 'static_display':
             static_display_fields.append((field_name, info))
-        elif imp in ['daily_required', 'daily_optional']:
+        elif imp in ['daily_required','daily_optional']:
             if field_name in PRESET_KEYS:
                 preset_fields.append((field_name, info))
             else:
                 custom_fields.append((field_name, info))
+
     if request.method == "POST":
+        if skipped:
+            habit.streak = 0
+            habit.points = max(0, habit.points - 5)
+            habit.save()
+
         data = {}
         for field_name, info in preset_fields + custom_fields:
-            posted_val = request.POST.get(field_name, '')
-            if info.get('importance') == 'daily_required' and not posted_val:
-                posted_val = "MISSING"
-            data[field_name] = posted_val
-        HabitRecord.objects.create(
-            habit=habit,
-            date=next_date,
-            data=data
-        )
+            val = request.POST.get(field_name, '')
+            if info.get('importance') == 'daily_required' and not val:
+                val = "MISSING"
+            data[field_name] = val
+
+        HabitRecord.objects.create(habit=habit, date=next_date, data=data)
+
         if habit.template_key == 'stop_smoking':
             habit.check_stop_smoking_progress()
         elif habit.template_key == 'wake_up_early':
             habit.check_wake_up_early_progress()
         elif habit.template_key == 'eat_healthy':
             habit.check_eat_healthy_progress()
-        habit.streak += 15  #1
-        habit.points += 15 #1
+
+        habit.check_timeline_completion()
+        habit.streak += 15 # Set to 1
+        habit.points += 15 # Set to 1
         habit.save()
-        message_index = min(habit.streak - 1, 4)
-        habit_type = habit.template_key or 'custom'
-        message = AWARD_MESSAGES.get(habit_type, AWARD_MESSAGES['custom'])[message_index]
-        query = urlencode({'success': 1, 'msg': message})
-        return redirect(f"{request.path}?{query}")
+
+        index = min(habit.streak - 1, 4)
+        htype = habit.template_key or 'custom'
+        msg = AWARD_MESSAGES.get(htype, AWARD_MESSAGES['custom'])[index]
+        q = urlencode({'success': 1, 'msg': msg})
+        return redirect(f"{request.path}?{q}")
+
     return render(request, 'track_habits/insert_data.html', {
         'habit': habit,
         'records': records,

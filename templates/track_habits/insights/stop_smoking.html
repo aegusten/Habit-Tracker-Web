@@ -1,31 +1,43 @@
-<div class="modal fade" id="insightModal" tabindex="-1" aria-labelledby="insightModalLabel" aria-hidden="true">
+{% load static %}
+<div class="container mt-4">
+  <h2 class="mb-3">Stop Smoking Habit Details</h2>
+
+  <script id="chart-data" type="application/json">{{ chart_data|safe }}</script>
+  <script id="chart-fields" type="application/json">{{ numeric_fields|safe }}</script>
+  <script id="chart-method" type="application/json">"{{ insights_method }}"</script>
+
+</div>
+
+<div class="modal fade" id="insightModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
+    <div class="modal-content p-3 rounded-4">
       <div class="modal-header">
-        <h5 class="modal-title fw-bold" id="insightModalLabel">Detailed Insights</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title fw-bold">Detailed Insights</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="row">
-          {% for field in numeric_fields %}
-          <div class="col-md-6 mb-4">
-            <h6 class="fw-semibold">{{ field|cut:"_"|title }}</h6>
-      
-            {% if habit.insights_method == "graph" or habit.insights_method == "both" %}
-            <div class="chart-container" style="height: 250px;">
+        <div id="frontendProgressMsg" class="alert alert-info d-none"></div>
+        <div class="row g-4">
+          {% for field in numeric_fields_list %}
+          <div class="col-md-6">
+            <h6 class="fw-semibold mb-2">{{ field|cut:"_"|title }}</h6>
+            {% if insights_method == "graph" or insights_method == "both" %}
+            <div class="chart-container mb-3" style="height:300px;">
               <canvas id="modalGraph_{{ forloop.counter }}"></canvas>
             </div>
             {% endif %}
-      
-            {% if habit.insights_method == "chart" or habit.insights_method == "both" %}
-            <div class="chart-container mt-3" style="height: 250px;">
+            {% if insights_method == "chart" or insights_method == "both" %}
+            <div class="chart-container" style="height:300px;">
               <canvas id="modalChart_{{ forloop.counter }}"></canvas>
             </div>
             {% endif %}
           </div>
           {% endfor %}
         </div>
-      </div>      
+      </div>
     </div>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/insights/stop_smoking.js' %}"></script>
