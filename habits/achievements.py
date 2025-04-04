@@ -33,31 +33,32 @@ def compute_user_achievements(user):
 
     if user.login_count >= 10:
         badges['login_streak_badge'] = True
-        award_user_badge(user, 'login_streak', True)
+        award_user_badge(user, 'login_streak_badge', True)
     else:
-        award_user_badge(user, 'login_streak', False)
+        award_user_badge(user, 'login_streak_badge', False)
 
     unique_log_days = HabitRecord.objects.filter(habit__user=user).values('date').distinct().count()
     if unique_log_days >= 20:
         badges['consistency_badge'] = True
-        award_user_badge(user, 'consistency', True)
+        award_user_badge(user, 'consistency_badge', True)
     else:
-        award_user_badge(user, 'consistency', False)
+        award_user_badge(user, 'consistency_badge', False)
 
     if Habit.objects.filter(user=user, achieved=True).exists():
         badges['first_win_badge'] = True
-        award_user_badge(user, 'first_win', True)
+        award_user_badge(user, 'first_win_badge', True)
     else:
-        award_user_badge(user, 'first_win', False)
+        award_user_badge(user, 'first_win_badge', False)
 
     preset_completed = Habit.objects.filter(user=user, achieved=True, template_key__isnull=False).count()
     if preset_completed >= 3:
         badges['triple_habit_badge'] = True
-        award_user_badge(user, 'triple_habit', True)
+        award_user_badge(user, 'triple_habit_badge', True)
     else:
-        award_user_badge(user, 'triple_habit', False)
+        award_user_badge(user, 'triple_habit_badge', False)
 
     return badges
+
 
 def compute_habit_achievements(habit):
     user = habit.user
@@ -79,7 +80,7 @@ def compute_habit_achievements(habit):
     achievements['silver_badge'] = silver
     achievements['gold_badge'] = gold
     achievements['platinum_badge'] = platinum
-    achievements['streak_10_badge'] = streak_10 #Enter 10 data in the row [ WORKS ]
+    achievements['streak_10_badge'] = streak_10 
     achievements['completed_preset_badge'] = completed
 
     return achievements

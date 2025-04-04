@@ -34,11 +34,59 @@
     </div>
   </div>
 </div>
+<style>
+  /* Dark mode override styles */
+  [data-theme="dark"] .card {
+    background-color: #1e1e1e;
+    color: #ffffff;
+  }
+
+  [data-theme="dark"] .card-body {
+    color: #ffffff;
+  }
+
+  [data-theme="dark"] .list-group-item {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border-color: #333333;
+  }
+
+  [data-theme="dark"] .btn-outline-primary {
+    color: #ffffff;
+    border-color: #ffffff;
+  }
+
+  [data-theme="dark"] .btn-outline-primary:hover {
+    background-color: #ffffff;
+    color: #1e1e1e;
+  }
+
+  [data-theme="dark"] .list-group-item img {
+    filter: brightness(1.2);
+  }
+
+  /* Scale up the achievements section a bit */
+  .list-group-item {
+    font-size: 1.15rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .list-group-item img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .card h5 i {
+    font-size: 1.4rem;
+  }
+</style>
 <script>
   const CHANGE_PASSWORD_URL = "{% url 'accounts:change_password' %}";
   const VERIFY_SECURITY_URL = "{% url 'accounts:public_verify_security_answers' %}";
+  const GET_SECURITY_QUESTIONS_URL = "{% url 'accounts:get_security_questions' %}";
   const CSRF_TOKEN = "{{ csrf_token }}";
 </script>
+
 {% endblock content %}
 
 {% block extra_body %}

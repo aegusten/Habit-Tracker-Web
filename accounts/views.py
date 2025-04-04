@@ -8,6 +8,7 @@ from habits.achievements import (
     compute_user_achievements,
     award_user_badge,
 )
+from accounts.models import UserAchievement
     
 from django.http import JsonResponse
 from habits.models import Habit
@@ -24,6 +25,9 @@ from .models import (
     User,
     UserProfile,
 )
+import logging
+logger = logging.getLogger(__name__)
+
 
 from habits.models import HabitRecord
 
@@ -115,7 +119,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             user.login_count += 1
-            user.save()
+            user.save()            
             login(request, user)
             return redirect('accounts:main_menu')
     else:
@@ -154,19 +158,44 @@ def public_forgot_password_view(request):
         return JsonResponse({"ok": True})
     return JsonResponse({"error": "Invalid request"}, status=400)
 
+@csrf_exempt
 def public_verify_security_answers(request):
-    data = json.loads(request.body)
-    id_number = data.get('id_number', '').strip()
-    user = User.objects.filter(id_number=id_number).first()
-    if not user:
-        return JsonResponse({'valid': False})
-    user_answers = UserSecurityAnswer.objects.filter(user=user)
-    correct = 0
-    for ua in user_answers:
-        typed = data.get(ua.question_text, '').strip().lower()
-        if ua.answer.strip().lower() == typed:
-            correct += 1
-    return JsonResponse({'valid': correct >= 2})
+    try:
+        data = json.loads(request.body)
+        logger.debug("Received data: %s", data)
+
+        # Normalize keys to strings
+        data = {str(k): v for k, v in data.items()}
+
+        id_number = data.get('id_number', '').strip()
+        user = User.objects.filter(id_number=id_number).first()
+
+        if not user:
+            logger.warning("User not found for id_number: %s", id_number)
+            return JsonResponse({'valid': False, 'error': 'User not found'}, status=404)
+
+        user_answers = UserSecurityAnswer.objects.filter(user=user)
+        correct = 0
+
+        for ua in user_answers:
+            question_id = str(ua.question.id)
+            provided_answer = data.get(question_id, '').strip().lower()
+            stored_answer = ua.answer.strip().lower()
+
+            logger.debug(f"Comparing answers for question {question_id}: user='{provided_answer}' vs stored='{stored_answer}'")
+
+            if provided_answer == stored_answer:
+                correct += 1
+
+        valid = correct >= 2
+        logger.info(f"Security answers valid: {valid} ({correct} correct)")
+
+        return JsonResponse({'valid': valid})
+
+    except Exception as e:
+        logger.exception("Error verifying security answers")
+        return JsonResponse({'valid': False, 'error': 'Server error'}, status=500)
+
 
 @login_required
 def change_password_view(request):
@@ -206,6 +235,8 @@ def change_password_view(request):
 @login_required
 def edit_personal_info_view(request):
     user = request.user
+    compute_user_achievements(user)    
+    user_badges = get_user_badges_dict(user)
     form = UpdatePersonalInfoForm(request.POST or None, instance=user)
     password_form = PasswordChangeForm(user=user)
     set_password_form = SetPasswordForm(user=user)
@@ -222,24 +253,31 @@ def edit_personal_info_view(request):
         'password_form': password_form,
         'set_password_form': set_password_form,
         'security_questions': questions,
-        'recent_logins': []
+        'recent_logins': [],
+        'user_badges': user_badges
     }
     return render(request, 'edit_personal_info.html', context)
+
+def get_user_badges_dict(user):
+    active_badges = UserAchievement.objects.filter(user=user, is_active=True)
+    badge_dict = {
+        'login_streak_badge': False,
+        'consistency_badge': False,
+        'first_win_badge': False,
+        'triple_habit_badge': False,
+    }
+    for badge in active_badges:
+        badge_dict[badge.badge_type] = True
+    return badge_dict
+
 
 @login_required
 def profile_view(request):
     user = request.user
-    login_count = user.login_count
-    habits = Habit.objects.filter(user=user)
-    completed_prepared = habits.filter(achieved=True, template_key__isnull=False).count()
-    completed_any = habits.filter(achieved=True).exists()
-    all_logs = HabitRecord.objects.filter(habit__user=user).values('date').distinct().count()
-    user_badges = compute_user_achievements(user)
+    compute_user_achievements(user)  
+    user_badges = get_user_badges_dict(user)
+
     context = {
-        'login_badge': login_count >= 10,
-        'triple_finisher_badge': completed_prepared >= 3,
-        'first_win_badge': completed_any,
-        'consistency_badge': all_logs >= 20,
         'user_badges': user_badges,
     }
     return render(request, 'edit_personal_info.html', context)
@@ -251,6 +289,7 @@ def get_security_questions_view(request):
     user = User.objects.filter(id_number=id_number).first()
     if not user:
         return JsonResponse({"questions": []})
+
     user_answers = UserSecurityAnswer.objects.filter(user=user)
-    questions = [ua.question_text for ua in user_answers]
+    questions = [{"id": str(ua.question.id), "text": ua.question_text} for ua in user_answers]
     return JsonResponse({"questions": questions})
