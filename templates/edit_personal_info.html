@@ -34,9 +34,15 @@
     </div>
   </div>
 </div>
+<script>
+  const CHANGE_PASSWORD_URL = "{% url 'accounts:change_password' %}";
+  const VERIFY_SECURITY_URL = "{% url 'accounts:public_verify_security_answers' %}";
+  const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
 {% endblock content %}
 
 {% block extra_body %}
 {% include 'utils/edit_user_info.html' %}
 <script src="{% static 'js/edit_personal_details.js' %}"></script>
+
 {% endblock extra_body %}
