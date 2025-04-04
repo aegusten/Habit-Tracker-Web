@@ -1,11 +1,9 @@
 {% load static %}
 <div class="container mt-4">
   <h2 class="mb-3">Stop Smoking Habit Details</h2>
-
   <script id="chart-data" type="application/json">{{ chart_data|safe }}</script>
   <script id="chart-fields" type="application/json">{{ numeric_fields|safe }}</script>
   <script id="chart-method" type="application/json">"{{ insights_method }}"</script>
-
 </div>
 
 <div class="modal fade" id="insightModal" tabindex="-1" aria-hidden="true">
@@ -20,15 +18,19 @@
         <div class="row g-4">
           {% for field in numeric_fields_list %}
           <div class="col-md-6">
-            <h6 class="fw-semibold mb-2">{{ field|cut:"_"|title }}</h6>
+            <h5 class="fw-semibold text-info mb-3">{{ field|cut:"_"|title }}</h5>
             {% if insights_method == "graph" or insights_method == "both" %}
-            <div class="chart-container mb-3" style="height:300px;">
-              <canvas id="modalGraph_{{ forloop.counter }}"></canvas>
+            <div class="chart-container mb-4 p-3 border border-warning rounded" style="background-color: #fff9e8;">
+              <h6 class="text-warning fw-semibold mb-2">Bar Graph</h6>
+              <canvas id="modalGraph_{{ forloop.counter }}" height="300"></canvas>
+              <p class="mb-0 small text-secondary">Shows daily values as bars. Hover for details.</p>
             </div>
             {% endif %}
             {% if insights_method == "chart" or insights_method == "both" %}
-            <div class="chart-container" style="height:300px;">
-              <canvas id="modalChart_{{ forloop.counter }}"></canvas>
+            <div class="chart-container mb-4 p-3 border border-primary rounded" style="background-color: #eef4ff;">
+              <h6 class="text-primary fw-semibold mb-2">Line Chart</h6>
+              <canvas id="modalChart_{{ forloop.counter }}" height="300"></canvas>
+              <p class="mb-0 small text-secondary">Plots your progress over time in a smooth line.</p>
             </div>
             {% endif %}
           </div>
