@@ -1,0 +1,52 @@
+
+
+<h2 class="text-center mb-4 achieved-section-title"> Achieved Habits</h2>
+
+<div class="achieved-section-grid">
+{% for habit in achieved_habits %}
+<div class="achieved-section-card">
+    <h5>{{ habit.name }}</h5>
+    <p><strong>Achieved on:</strong> {{ habit.achieved_date|date:"F j, Y" }}</p>
+    <a href="{% url 'habits:track_habit_detail' habit.id %}" class="btn">View Details</a>
+</div>
+{% endfor %}
+</div>
+<style>
+.achieved-section-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+.achieved-section-card {
+    background-color: var(--card-bg, #fff);
+    border: 1px solid var(--card-border, #ccc);
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 320px;
+    color: var(--text-color, #212529);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.achieved-section-card h5 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #28a745;
+}
+
+.achieved-section-card .btn {
+    background-color: #28a745;
+    color: #fff;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: none;
+}
+
+[data-theme="dark"] .achieved-section-title {
+    color: #ffffff;
+}
+</style>

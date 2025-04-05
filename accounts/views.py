@@ -59,10 +59,13 @@ def main_menu_view(request):
     habit_summary['daily'] = list(set(habit_summary['daily']))
     habit_summary['weekly'] = list(set(habit_summary['weekly']))
     
+    achieved_habits = habits.filter(achieved=True).order_by('-achieved_date')
+    
     return render(request, 'main_menu.html', {
         'daily_habit_types': habit_summary['daily'],
         'weekly_habit_types': habit_summary['weekly'],
         'habit_count': habits.count(),
+        'achieved_habits': achieved_habits,
     })
 
 

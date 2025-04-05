@@ -1,31 +1,75 @@
-<div class="modal fade" id="insightModal" tabindex="-1" aria-labelledby="insightModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold" id="insightModalLabel">Detailed Insights</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="modal fade" id="insightModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+    <div class="modal-content p-3 rounded-4" style="background-color: var(--card-bg); color: var(--text-color);">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-semibold">Detailed Insights</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="row">
-          {% for field in numeric_fields %}
-          <div class="col-md-6 mb-4">
-            <h6 class="fw-semibold">{{ field|cut:"_"|title }}</h6>
-      
-            {% if habit.insights_method == "graph" or habit.insights_method == "both" %}
-            <div class="chart-container" style="height: 250px;">
-              <canvas id="modalGraph_{{ forloop.counter }}"></canvas>
-            </div>
-            {% endif %}
-      
-            {% if habit.insights_method == "chart" or habit.insights_method == "both" %}
-            <div class="chart-container mt-3" style="height: 250px;">
-              <canvas id="modalChart_{{ forloop.counter }}"></canvas>
-            </div>
-            {% endif %}
+        {% if numeric_fields_list and numeric_fields_list|length > 0 %}
+        <script id="modal-chart-data" type="application/json">{{ chart_data|safe }}</script>
+        <script id="modal-chart-fields" type="application/json">{{ numeric_fields|safe }}</script>
+        <script id="modal-chart-method" type="application/json">"{{ insights_method }}"</script>
+        <script id="modal-user-prefs" type="application/json">{{ user_prefs|safe }}</script>
+        <div class="mb-3">
+          <h6 class="fw-semibold mb-2 text-secondary" style="font-size:0.95rem;">Select which data fields to display:</h6>
+          <div class="d-flex flex-wrap gap-2">
+            {% for field in numeric_fields_list %}
+            <label class="form-check form-check-inline small text-secondary align-items-center">
+              <input class="form-check-input fieldToggle" type="checkbox" data-field-name="{{ field }}" checked>
+              <span class="ms-1">{{ field|cut:"_" }}</span>
+            </label>
+            {% endfor %}
           </div>
-          {% endfor %}
         </div>
-      </div>      
+        <hr class="mb-4"/>
+        {% if insights_method == "graph" or insights_method == "both" %}
+        <div class="mb-4 p-3 border border-warning rounded" style="background-color:#fff9e8;">
+          <h5 class="text-warning fw-semibold mb-2">Graph Section</h5>
+          <div class="mb-2 d-flex gap-2 align-items-center">
+            <span class="small text-secondary">Pick graph type:</span>
+            <label class="form-check-inline small text-secondary">
+              <input class="form-check-input graphTypeChoice" type="radio" name="graphTypeGroup" value="auto" checked> Auto
+            </label>
+            <label class="form-check-inline small text-secondary">
+              <input class="form-check-input graphTypeChoice" type="radio" name="graphTypeGroup" value="bar"> Bar
+            </label>
+            <label class="form-check-inline small text-secondary">
+              <input class="form-check-input graphTypeChoice" type="radio" name="graphTypeGroup" value="pie"> Pie
+            </label>
+          </div>
+          <div style="width:100%; height:300px; overflow:hidden;">
+            <canvas id="graphCanvas" style="width:100%; height:100%;"></canvas>
+          </div>
+          <p class="mb-0 small text-secondary mt-2">“Bar” shows each field as a dataset across dates. “Pie” shows the latest date’s distribution among fields.</p>
+        </div>
+        {% endif %}
+        {% if insights_method == "chart" or insights_method == "both" %}
+        <div class="mb-4 p-3 border border-primary rounded" style="background-color:#eef4ff;">
+          <h5 class="text-primary fw-semibold mb-2">Chart Section</h5>
+          <div class="mb-2 d-flex gap-2 align-items-center">
+            <span class="small text-secondary">Pick chart type:</span>
+            <label class="form-check-inline small text-secondary">
+              <input class="form-check-input chartTypeChoice" type="radio" name="chartTypeGroup" value="auto" checked> Auto
+            </label>
+            <label class="form-check-inline small text-secondary">
+              <input class="form-check-input chartTypeChoice" type="radio" name="chartTypeGroup" value="line"> Line
+            </label>
+            <label class="form-check-inline small text-secondary">
+              <input class="form-check-input chartTypeChoice" type="radio" name="chartTypeGroup" value="bar"> Column
+            </label>
+          </div>
+          <div style="width:100%; height:300px; overflow:hidden;">
+            <canvas id="chartCanvas" style="width:100%; height:100%;"></canvas>
+          </div>
+          <p class="mb-0 small text-secondary mt-2">“Line” or “Column” for multiple fields across dates. “Auto” picks line if average≥10 else column.</p>
+          <div id="chartSummary" class="mt-1 text-muted small"></div>
+        </div>
+        {% endif %}
+        {% else %}
+        <p class="text-muted text-center">No numeric insights to display.</p>
+        {% endif %}
+      </div>
     </div>
   </div>
 </div>

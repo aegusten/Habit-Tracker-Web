@@ -1,56 +1,187 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="tab-switcher mb-4">
-  <button class="tab-link active" data-target="#today-section">Today</button>
-  <button class="tab-link" data-target="#archive-section">Archive</button>
-</div>
-{% if daily_habit_types or weekly_habit_types %}
-<div class="btn-group mb-4" role="group">
-  {% if daily_habit_types %}
-  <button type="button" class="btn btn-success" onclick="startNotifications('daily')">Start Daily</button>
-  {% endif %}
-  {% if weekly_habit_types %}
-  <button type="button" class="btn btn-info" onclick="startNotifications('weekly')">Start Weekly</button>
-  {% endif %}
-</div>
-{% endif %}
-<div id="today-section">
-  <div class="row g-3 mb-4">
-    <div class="col-12 col-md-6 col-lg-3">
-      <div class="feature-card fruits text-center p-3">
-        <i class="bi bi-basket-fill card-icon mb-2"></i>
-        <h5 class="feature-title">How to Prepare Fruits and Vegetables</h5>
-        <p class="feature-text">Simple tips to wash, cut, and store produce for maximum freshness.</p>
-      </div>
+
+<div class="hero-area text-center text-white py-5">
+  <div class="container">
+    <h1 class="fw-bold mb-2">Welcome Back</h1>
+    <p class="lead mb-4">Shape your day with purpose. Small efforts, big results.</p>
+
+    <div class="tab-switcher d-inline-flex gap-2 rounded-pill px-3 py-2 bg-glass mb-4">
+      <button class="tab-link active" data-target="#today-section">Today</button>
+      <button class="tab-link" data-target="#archive-section">Archive</button>
     </div>
-    <div class="col-12 col-md-6 col-lg-3">
-      <div class="feature-card track text-center p-3">
-        <i class="bi bi-graph-up card-icon mb-2"></i>
-        <h5 class="feature-title">Track Your Habits</h5>
-        <p class="feature-text">Use our tools to monitor your daily habits and track progress over time.</p>
-      </div>
+
+    {% if daily_habit_types or weekly_habit_types %}
+    <div class="d-flex justify-content-center gap-3 mt-3">
+      {% if daily_habit_types %}
+      <button type="button" class="btn btn-modern-green" onclick="startNotifications('daily')">Start Daily</button>
+      {% endif %}
+      {% if weekly_habit_types %}
+      <button type="button" class="btn btn-modern-blue" onclick="startNotifications('weekly')">Start Weekly</button>
+      {% endif %}
     </div>
-    <div class="col-12 col-md-6 col-lg-3">
-      <div class="feature-card portions text-center p-3">
-        <i class="bi bi-pie-chart-fill card-icon mb-2"></i>
-        <h5 class="feature-title">Portions (new habit)</h5>
-        <p class="feature-text">Start a new habit focused on balanced meal portion sizes.</p>
-      </div>
-    </div>
-    <div class="col-12 col-md-6 col-lg-3">
-      <div class="feature-card philosophy text-center p-3">
-        <i class="bi bi-info-circle card-icon mb-2"></i>
-        <h5 class="feature-title">Our Philosophy</h5>
-        <p class="feature-text">Discover the values and ideas behind our habit-building approach.</p>
-      </div>
-    </div>
+    {% endif %}
   </div>
 </div>
-<div id="archive-section" class="d-none">
-  <h5 class="mt-3">Archive</h5>
-  <p class="text-muted">Archived items will appear here.</p>
+
+<div id="today-section">
+  <div class="container py-5">
+    <div class="row g-4 justify-content-center">
+
+      <div class="col-sm-6 col-lg-4 col-xl-3 d-flex">
+        <div class="habit-feature modern-card fruits flex-fill d-flex flex-column justify-content-between">
+          <div class="icon-wrapper"><i class="bi bi-emoji-smile"></i></div>
+          <div>
+            <h5 class="title">Prepare & Store</h5>
+            <p>Master the art of prepping fruits & vegetables for longer freshness.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-lg-4 col-xl-3 d-flex">
+        <div class="habit-feature modern-card track flex-fill d-flex flex-column justify-content-between">
+          <div class="icon-wrapper"><i class="bi bi-graph-up-arrow"></i></div>
+          <div>
+            <h5 class="title">Track Progress</h5>
+            <p>Visualize your commitment, stay focused, and never miss a beat.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-lg-4 col-xl-3 d-flex">
+        <div class="habit-feature modern-card portions flex-fill d-flex flex-column justify-content-between">
+          <div class="icon-wrapper"><i class="bi bi-pie-chart-fill"></i></div>
+          <div>
+            <h5 class="title">Smart Portions</h5>
+            <p>Create healthy meal portions with quick visual guidance.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-lg-4 col-xl-3 d-flex">
+        <div class="habit-feature modern-card philosophy flex-fill d-flex flex-column justify-content-between">
+          <div class="icon-wrapper"><i class="bi bi-lightbulb-fill"></i></div>
+          <div>
+            <h5 class="title">Build Purposefully</h5>
+            <p>Learn the psychology and philosophy behind habit formation.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
 </div>
+
+<div id="archive-section" class="d-none">
+  <div class="container text-center py-5">
+    {% include 'utils/achieved_habits_list.html' %}
+    <h5 class="mt-3">Your Archive</h5>
+    <p class="text-muted">Completed habits and past progress will show here.</p>
+  </div>
+</div>
+
+<style>
+.hero-area {
+  background: linear-gradient(to right top, #4d8bf5, #6fb3ff);
+}
+
+[data-theme="dark"] .hero-area {
+  background: linear-gradient(to right top, #1d1d1d, #2a2a2a);
+}
+
+.bg-glass {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.tab-switcher .tab-link {
+  background: none;
+  border: none;
+  font-weight: 600;
+  color: #fff;
+  padding: 0.4rem 1.25rem;
+  border-radius: 50px;
+  transition: background-color 0.3s ease;
+}
+
+.tab-switcher .tab-link.active {
+  background: #fff;
+  color: #4d8bf5;
+}
+
+.btn-modern-green {
+  background: linear-gradient(135deg, #34c759, #70d47b);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  border-radius: 30px;
+  transition: 0.3s ease;
+}
+
+.btn-modern-blue {
+  background: linear-gradient(135deg, #4d8bf5, #6fb3ff);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  border-radius: 30px;
+  transition: 0.3s ease;
+}
+
+.btn-modern-green:hover,
+.btn-modern-blue:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.habit-feature {
+  text-align: center;
+  padding: 2rem 1.2rem;
+  border-radius: 1rem;
+  background: var(--sidebar-bg);
+  color: var(--text-color);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.habit-feature:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.habit-feature .icon-wrapper {
+  font-size: 2rem;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.fruits .icon-wrapper { background-color: rgba(52, 199, 89, 0.15); }
+.track .icon-wrapper { background-color: rgba(77, 139, 245, 0.15); }
+.portions .icon-wrapper { background-color: rgba(246, 166, 35, 0.15); }
+.philosophy .icon-wrapper { background-color: rgba(132, 94, 247, 0.15); }
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.cta-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+}
+</style>
+
 {% endblock %}
 
 {% block notifications %}
