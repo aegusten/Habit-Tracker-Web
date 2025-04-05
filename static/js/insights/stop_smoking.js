@@ -1,102 +1,127 @@
-document.addEventListener("DOMContentLoaded",function(){
-  const cd=document.getElementById("chart-data");
-  const cf=document.getElementById("chart-fields");
-  const cm=document.getElementById("chart-method");
-  if(!cd||!cf||!cm)return;
- 
-  const chartData=JSON.parse(cd.textContent||"[]");
-  const fields=JSON.parse(cf.textContent||"[]");
-  const method=JSON.parse(cm.textContent||'"chart"');
-  const labels=chartData.map(r=>r.date);
- 
-  function checkFrontEndProgress(data){
-    let consecutiveZero=0;
-    for(let i=data.length-1; i>=0; i--){
-      let cigs=data[i].cigarettes_per_day||0;
-      if(+cigs===0) consecutiveZero++;
-      else break;
-    }
-    let msgBox=document.getElementById("frontendProgressMsg");
-    if(!msgBox)return;
-    if(consecutiveZero>=5){
-      msgBox.textContent="Front-end says: You have 5+ consecutive smoke-free days!";
-      msgBox.classList.remove("d-none","alert-info");
-      msgBox.classList.add("alert-success");
-    } else if(consecutiveZero>0){
-      msgBox.textContent=`Front-end says: You have ${consecutiveZero} consecutive smoke-free day(s). Keep going!`;
-      msgBox.classList.remove("d-none","alert-success");
-      msgBox.classList.add("alert-info");
-    } else {
-      msgBox.classList.add("d-none");
-    }
+document.addEventListener("DOMContentLoaded", function(){
+  const cdEl = document.getElementById("modal-chart-data");
+  const cfEl = document.getElementById("modal-chart-fields");
+  const cmEl = document.getElementById("modal-chart-method");
+  const upEl = document.getElementById("modal-user-prefs");
+  if(!cdEl || !cfEl || !cmEl || !upEl) return;
+  const chartData = JSON.parse(cdEl.textContent || "[]");
+  const fields = JSON.parse(cfEl.textContent || "[]");
+  const method = JSON.parse(cmEl.textContent || '"chart"');
+  const userPrefs = JSON.parse(upEl.textContent || "{}");
+  const modal = document.getElementById("insightModal");
+  if(!modal) return;
+  let graphInstance = null;
+  let chartInstance = null;
+  function labelify(str) {
+    return str.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
   }
- 
-  const modal=document.getElementById("insightModal");
-  if(!modal)return;
- 
-  modal.addEventListener("shown.bs.modal",()=>{
-   checkFrontEndProgress(chartData);
- 
-   fields.forEach((field,index)=>{
-    const label=field.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
-    const values=chartData.map(row=>row[field]||0);
-
-    if(method==="chart"||method==="both"){
-     const chartCanvas=document.getElementById(`modalChart_${index+1}`);
-     if(chartCanvas&&chartCanvas.dataset.rendered!=="true"){
-      chartCanvas.dataset.rendered="true";
-      const ctx=chartCanvas.getContext("2d");
-      const grad=ctx.createLinearGradient(0,0,0,chartCanvas.height);
-      grad.addColorStop(0,"rgba(64,128,255,0.4)");
-      grad.addColorStop(1,"rgba(64,128,255,0)");
-      new Chart(ctx,{
-       type:"line",
-       data:{
-        labels:labels,
-        datasets:[{
-         label:label,
-         data:values,
-         borderColor:"rgba(64,128,255,1)",
-         backgroundColor:grad,
-         fill:true,
-         tension:0.3
-        }]
-       },
-       options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{legend:{display:true}}
-       }
+  modal.addEventListener("shown.bs.modal", () => {
+    const fieldTogglesEls = document.querySelectorAll(".fieldToggle");
+    const graphTypeEls = document.querySelectorAll(".graphTypeChoice");
+    const chartTypeEls = document.querySelectorAll(".chartTypeChoice");
+    function getSelectedFields() {
+      let arr = [];
+      fieldTogglesEls.forEach(chk => {
+        if(chk.checked) arr.push(chk.dataset.fieldName);
       });
-     }
+      return arr;
     }
- 
-    if(method==="graph"||method==="both"){
-     const graphCanvas=document.getElementById(`modalGraph_${index+1}`);
-     if(graphCanvas&&graphCanvas.dataset.rendered!=="true"){
-      graphCanvas.dataset.rendered="true";
-      const ctx=graphCanvas.getContext("2d");
-      new Chart(ctx,{
-       type:"bar",
-       data:{
-        labels:labels,
-        datasets:[{
-         label:label,
-         data:values,
-         backgroundColor:"rgba(255,99,132,0.7)",
-         borderColor:"rgba(255,99,132,1)",
-         borderWidth:1
-        }]
-       },
-       options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{legend:{display:true}}
-       }
+    function buildDatasetsForTime(selected) {
+      const dateLabels = chartData.map(r => r.date);
+      const datasets = selected.map(fn => {
+        const dataArr = chartData.map(row => parseFloat(row[fn] || 0));
+        return { label: labelify(fn), data: dataArr };
       });
-     }
+      return { labels: dateLabels, datasets };
     }
-   });
+    function buildPieData(selected) {
+      if(!chartData.length) return { labels: [], data: [] };
+      const lastRow = chartData[chartData.length - 1];
+      const labels = [];
+      const data = [];
+      selected.forEach(f => {
+        labels.push(labelify(f));
+        data.push(parseFloat(lastRow[f] || 0));
+      });
+      return { labels, data };
+    }
+    function updateGraph() {
+      const sel = getSelectedFields();
+      if(!sel.length) { if(graphInstance) graphInstance.destroy(); return; }
+      let userGraph = "auto";
+      graphTypeEls.forEach(r => { if(r.checked) userGraph = r.value; });
+      if(graphInstance) graphInstance.destroy();
+      if(userGraph === "pie") {
+        const pd = buildPieData(sel);
+        graphInstance = new Chart(document.getElementById("graphCanvas").getContext("2d"), {
+          type: "pie",
+          data: {
+            labels: pd.labels,
+            datasets: [{
+              label: "Distribution",
+              data: pd.data,
+              backgroundColor: ["#ffd54f", "#fff176", "#ffecb3", "#ffe082", "#ffe57f", "#fff9c4"],
+              borderColor: "#ffca28"
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      } else {
+        let finalType = (userGraph === "auto") ? "bar" : userGraph;
+        const tdata = buildDatasetsForTime(sel);
+        tdata.datasets.forEach(ds => {
+          ds.backgroundColor = "rgba(255,193,7,0.6)";
+          ds.borderColor = "rgba(255,193,7,1)";
+          ds.borderWidth = 1;
+        });
+        graphInstance = new Chart(document.getElementById("graphCanvas").getContext("2d"), {
+          type: finalType,
+          data: { labels: tdata.labels, datasets: tdata.datasets },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
+    }
+    function updateChart() {
+      const sel = getSelectedFields();
+      if(!sel.length) { if(chartInstance) chartInstance.destroy(); return; }
+      let userChart = "auto";
+      chartTypeEls.forEach(r => { if(r.checked) userChart = r.value; });
+      if(chartInstance) chartInstance.destroy();
+      let finalType = (userChart === "auto") ? "line" : (userChart === "bar" ? "bar" : userChart);
+      const tdata = buildDatasetsForTime(sel);
+      let colorList = ["rgba(0,123,255,0.4)", "rgba(40,167,69,0.4)", "rgba(255,193,7,0.4)", "rgba(220,53,69,0.4)"];
+      tdata.datasets.forEach((ds, i) => {
+        ds.backgroundColor = colorList[i % colorList.length];
+        ds.borderColor = colorList[i % colorList.length].replace("0.4", "1");
+        ds.borderWidth = 1;
+        ds.fill = (finalType === "line");
+        ds.tension = 0.3;
+      });
+      chartInstance = new Chart(document.getElementById("chartCanvas").getContext("2d"), {
+        type: finalType,
+        data: { labels: tdata.labels, datasets: tdata.datasets },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+      let sum = 0, count = 0;
+      sel.forEach(f => {
+        chartData.forEach(r => {
+          sum += parseFloat(r[f] || 0);
+          count++;
+        });
+      });
+      let avg = (count > 0) ? (sum / count).toFixed(2) : "0";
+      document.getElementById("chartSummary").textContent = `Total: ${sum}, Avg: ${avg}`;
+    }
+    document.querySelectorAll(".fieldToggle").forEach(chk => {
+      chk.addEventListener("change", () => { updateGraph(); updateChart(); });
+    });
+    document.querySelectorAll(".graphTypeChoice").forEach(radio => {
+      radio.addEventListener("change", updateGraph);
+    });
+    document.querySelectorAll(".chartTypeChoice").forEach(radio => {
+      radio.addEventListener("change", updateChart);
+    });
+    updateGraph();
+    updateChart();
   });
- });
- 
+});

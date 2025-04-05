@@ -1,23 +1,23 @@
 {% load static %}
 
 <div class="row justify-content-center g-3 mb-4">
-    {% if streak >= 10 %}
-    <div class="col-md-6">
-      <div class="card text-center shadow-sm h-100 p-4">
-        <img src="{% static 'icons/streak_10.png' %}" alt="10-Day Streak" width="64" class="mx-auto mb-3">
-        <h5 class="fw-bold dark:text-white">⚡ 10-Day Streak</h5>
-        <p class="text-muted small mb-0 dark:text-white">You’ve logged 10 days in a row!</p>
-      </div>
+  {% if streak >= 10 %}
+  <div class="col-md-6">
+    <div class="card text-center shadow-sm h-100 p-4">
+      <img src="{% static 'icons/streak_10.png' %}" alt="10-Day Streak" width="64" class="mx-auto mb-3">
+      <h5 class="fw-bold" style="color: var(--text-color);">⚡ 10-Day Streak</h5>
+      <p class="small mb-0" style="color: var(--text-color);">You’ve logged 10 days in a row!</p>
     </div>
-    {% endif %}
-  
-    {% if habit.template_key and habit.achieved %}
-    <div class="col-md-6">
-      <div class="card text-center shadow-sm h-100 p-4">
-        <img src="{% static 'icons/completed_preset.png' %}" alt="Completed Habit" width="64" class="mx-auto mb-3">
-        <h5 class="fw-bold dark:text-white">🏅 Completed Prepared Habit</h5>
-        <p class="text-muted small mb-0 dark:text-white">You’ve completed a preset goal!</p>
-      </div>
-    </div>
-    {% endif %}
   </div>
+  {% endif %}
+
+  {% if habit.template_key and habit.achieved %}
+  <div class="col-md-6">
+    <div class="card text-center shadow-sm h-100 p-4">
+      <img src="{% static 'icons/completed_preset.png' %}" alt="Completed Habit" width="64" class="mx-auto mb-3">
+      <h5 class="fw-bold" style="color: var(--text-color);">🏅 Completed Prepared Habit</h5>
+      <p class="small mb-0" style="color: var(--text-color);">You’ve completed a preset goal!</p>
+    </div>
+  </div>
+  {% endif %}
+</div>

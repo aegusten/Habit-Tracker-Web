@@ -22,7 +22,6 @@ document.addEventListener("DOMContentLoaded", function () {
   let method = null;
   let verifiedOldPassword = "";
 
-  // Step 1: Choose method
   btnUseOld.onclick = () => {
     method = "old";
     step1.classList.add('d-none');
@@ -35,8 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
     step1.classList.add('d-none');
     step2Sec.classList.remove('d-none');
     progress.style.width = '66%';
-  
-    // Load questions dynamically
+
     const idNumber = document.getElementById('userIdNumber')?.value;
     if (!idNumber) return;
   
@@ -68,7 +66,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 
-  // Back buttons
   backToStep1.onclick = () => {
     step2Old.classList.add('d-none');
     step1.classList.remove('d-none');
@@ -85,7 +82,6 @@ document.addEventListener("DOMContentLoaded", function () {
     progress.style.width = '33%';
   };
 
-  // Step 2A: Verify Old Password
   verifyOldBtn.onclick = () => {
     oldPwError.textContent = '';
     fetch(CHANGE_PASSWORD_URL, {
@@ -116,7 +112,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   };
 
-  // Step 2B: Verify Security Answers
   verifySecBtn.onclick = () => {
     secError.textContent = '';
     const idNumber = document.getElementById('userIdNumber')?.value;
@@ -154,7 +149,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   };
 
-  // Step 3: Update Password
   btnUpdatePw.onclick = () => {
     newPassErrors.textContent = '';
     const pw1 = document.querySelector('[name="new_password1"]').value;

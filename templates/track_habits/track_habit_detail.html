@@ -4,21 +4,25 @@
 
 <div class="container py-4" style="max-width: 1000px;">
   <div class="text-center mb-4">
-    <h2 class="fw-bold dark:text-white">Track Habit: <span class="text-primary">{{ habit.name }}</span></h2>
+    <h2 class="fw-bold" style="color: var(--text-color);">
+      Track Habit: <span class="text-primary">{{ habit.name }}</span>
+    </h2>
   </div>
 
   {% if messages %}
-    <div class="alert-container position-fixed top-0 start-50 translate-middle-x mt-4" style="z-index: 1080;">
-        {% for message in messages %}
-        <div class="alert alert-success alert-dismissible fade show shadow border-0 rounded-3 px-4 py-3 d-flex align-items-center gap-2 text-sm" role="alert">
-            <i class="bi bi-check-circle-fill fs-5"></i>
-            <span>{{ message }}</span>
-            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
+  <div class="habit-toast-wrapper" style="position: absolute; top: 20px; left: 45%; transform: translateX(-50%); z-index: 1080;">
+    {% for message in messages %}
+    <div class="habit-success-toast d-flex align-items-center gap-2 px-4 py-3 show" role="alert">
+      <i class="bi bi-check-circle-fill fs-5"></i>
+      <span class="flex-grow-1">{{ message }}</span>
+      <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+    {% endfor %}
+  </div>
   {% endif %}
-
+  
+  
+  
   {% include 'utils/habit_badge_highlights.html' %}
 
   <div class="row g-3">
@@ -28,11 +32,11 @@
       <div class="card h-100 p-3">
         <div class="d-flex align-items-center mb-2">
           <i class="bi bi-graph-up-arrow text-info fs-4 me-2"></i>
-          <h5 class="fw-semibold mb-0 dark:text-white">Insights</h5>
+          <h5 class="fw-semibold mb-0" style="color: var(--text-color);">Insights</h5>
         </div>
 
         {% if not numeric_fields %}
-          <div class="text-muted text-center dark:text-white">No numeric insights to display yet.</div>
+        <div class="text-center" style="color: var(--text-color);">No numeric insights to display yet.</div>
         {% endif %}
 
         <div class="chart-wrapper">
@@ -49,19 +53,21 @@
           </script>
         </div>
 
-        <small class="text-muted d-block mt-2 dark:text-white">
-          Committed Days: <strong>{{ committed_days }}</strong> | Days Left: <strong>{{ days_remaining }}</strong>
+        <small class="d-block mt-2" style="color: var(--text-color);">
+          Committed Days: <strong>{{ committed_days }}</strong> |
+          Days Left: <strong>{{ days_remaining }}</strong>
         </small>
+
         <a href="#" class="stretched-link" data-bs-toggle="modal" data-bs-target="#insightModal"></a>
       </div>
     </div>
 
     {% include 'utils/habit_edit_forms.html' %}
   </div>
+
   {% with key=habit.template_key|default:"custom" %}
     {% include "track_habits/insights/"|add:key|add:".html" %}
   {% endwith %}
-
 </div>
 
 {% block extra_body %}

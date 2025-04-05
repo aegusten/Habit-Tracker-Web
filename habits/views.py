@@ -151,8 +151,8 @@ def insert_data_view(request, habit_id):
             habit.check_eat_healthy_progress()
 
         habit.check_timeline_completion()
-        habit.streak += 15 # Set to 1
-        habit.points += 15 # Set to 1
+        habit.streak += 1 # Set to 1
+        habit.points += 1 # Set to 1
         habit.save()
         compute_user_achievements(request.user)
         message_index = min(habit.streak - 1, 4)
@@ -182,30 +182,35 @@ def track_habit_detail_view(request, habit_id):
                 habit.motivational_reminder = new_reminder
                 habit.save()
                 messages.success(request, "Reminder frequency updated successfully.")
+                
         elif form_type == "timeline":
             new_timeline = request.POST.get("timeline")
             if new_timeline:
                 habit.timeline = new_timeline
                 habit.save()
                 messages.success(request, "Goal timeline updated successfully.")
+                
         return redirect("habits:track_habit_detail", habit_id=habit.id)
 
-    numeric_fields = [
-        key for key, info in habit.metrics.items()
-        if info.get('importance') in ['daily_required', 'daily_optional']
-        and info.get('type') == 'number'
-    ]
-
+    numeric_fields = []
+    for k, info in habit.metrics.items():
+        if info.get("importance") in ["daily_required", "daily_optional"]:
+            if info.get("type") == "number":
+                numeric_fields.append(k)
+                
     chart_data = []
     for rec in habit_records:
-        row = {'date': rec.date.strftime('%Y-%m-%d')}
-        for field in numeric_fields:
+        row = {"date": rec.date.strftime("%Y-%m-%d")}
+        for nf in numeric_fields:
+            val = rec.data.get(nf, 0)
             try:
-                row[field] = float(rec.data.get(field, 0))
-            except (ValueError, TypeError):
-                row[field] = 0.0
+                row[nf] = float(val)
+            except:
+                row[nf] = 0.0
         chart_data.append(row)
-
+        
+    user_prefs = habit.metrics.get("insights_preferences", {})
+        
     total_points = habit.points
     streak = habit.streak
     committed_days = habit.streak
@@ -265,6 +270,8 @@ def track_habit_detail_view(request, habit_id):
         "days_remaining": days_remaining,
         "achieved": habit.achieved,
         "habit_badges": habit_badges,
+        
+        "user_prefs": json.dumps(user_prefs),
     })
 
 @login_required
@@ -332,3 +339,24 @@ def get_record_data_api(request, record_id):
         "date": record.date.strftime("%B %d, %Y"),
         "data": record.data or {}
     })
+
+@require_POST
+@login_required
+def save_insights_preferences(request, habit_id):
+    habit = get_object_or_404(Habit, pk=habit_id, user=request.user)
+    data = json.loads(request.body or "{}")
+
+    habit_preferences = habit.metrics.get("insights_preferences", {})
+
+    field_toggles = data.get("field_toggles", {})
+    graph_types = data.get("graph_types", {})
+    chart_types = data.get("chart_types", {})
+
+    habit_preferences["field_toggles"] = field_toggles
+    habit_preferences["graph_types"] = graph_types
+    habit_preferences["chart_types"] = chart_types
+
+    habit.metrics["insights_preferences"] = habit_preferences
+    habit.save()
+
+    return JsonResponse({"success": True})

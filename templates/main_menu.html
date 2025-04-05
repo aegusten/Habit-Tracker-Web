@@ -5,6 +5,7 @@
   <button class="tab-link active" data-target="#today-section">Today</button>
   <button class="tab-link" data-target="#archive-section">Archive</button>
 </div>
+
 {% if daily_habit_types or weekly_habit_types %}
 <div class="btn-group mb-4" role="group">
   {% if daily_habit_types %}
@@ -15,6 +16,11 @@
   {% endif %}
 </div>
 {% endif %}
+
+<div id="archive-section" class="d-none">
+  {% include 'utils/achieved_habits_list.html' %}
+</div>
+
 <div id="today-section">
   <div class="row g-3 mb-4">
     <div class="col-12 col-md-6 col-lg-3">
