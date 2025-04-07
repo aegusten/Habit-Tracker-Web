@@ -39,23 +39,35 @@ def form_new_habit_view(request):
                 for field in preset.get('extra_fields', []):
                     key = field['key']
                     val = request.POST.get(key, '')
+
                     if template_key == 'stop_smoking':
                         if key in ['cigarettes_per_day', 'craving_level']:
                             importance = 'daily_required'
                         else:
                             importance = 'static_display'
+
                     elif template_key == 'wake_up_early':
-                        importance = 'daily_required'
+                        if key in ['current_wake_time', 'desired_wake_time', 'bedtime']:
+                            importance = 'static_display'
+                        else:
+                            importance = 'daily_required'
+
                     elif template_key == 'eat_healthy':
-                        importance = 'daily_required'
+                        if key in ['daily_calorie_target', 'fruit_veg_target', 'water_intake_goal']:
+                            importance = 'static_display'
+                        else:
+                            importance = 'daily_required'
+
                     else:
                         importance = 'static_display'
+
                     metric_data[key] = {
                         'type': field['type'],
                         'label': field['label'],
                         'default': val,
                         'importance': importance
                     }
+
                 habit.metrics = metric_data
             custom_keys = request.POST.getlist('custom_field_key[]', [])
             custom_types = request.POST.getlist('custom_field_type[]', [])

@@ -5,33 +5,165 @@
       <i class="bi bi-trophy-fill me-2 text-success"></i> Achievements
     </h4>
     <ul class="list-group list-group-flush">
+
       {% if user_badges.login_streak_badge %}
-      <li class="list-group-item d-flex align-items-center py-3 fs-5">
-        <img src="{% static 'icons/login_badge.png' %}" alt="Login Badge" width="48" class="me-3">
-        <strong>Login Streak Achieved</strong>
+      <li class="list-group-item d-flex justify-content-between align-items-center py-3 fs-5">
+        <div class="d-flex align-items-center">
+          <img src="{% static 'icons/login_badge.png' %}" width="48" class="me-3" alt="Login Badge">
+          <strong>Login Streak Achieved</strong>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#badgeModalLogin">
+          View
+        </button>
       </li>
       {% endif %}
+
       {% if user_badges.consistency_badge %}
-      <li class="list-group-item d-flex align-items-center py-3 fs-5">
-        <img src="{% static 'icons/consistency_badge.png' %}" alt="Consistency Badge" width="48" class="me-3">
-        <strong>Consistency Achieved</strong>
+      <li class="list-group-item d-flex justify-content-between align-items-center py-3 fs-5">
+        <div class="d-flex align-items-center">
+          <img src="{% static 'icons/consistency_badge.png' %}" width="48" class="me-3" alt="Consistency Badge">
+          <strong>Consistency Achieved</strong>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#badgeModalConsistency">
+          View
+        </button>
       </li>
       {% endif %}
+
       {% if user_badges.first_win_badge %}
-      <li class="list-group-item d-flex align-items-center py-3 fs-5">
-        <img src="{% static 'icons/first_win_badge.png' %}" alt="First Win Badge" width="48" class="me-3">
-        <strong>First Win Achieved</strong>
+      <li class="list-group-item d-flex justify-content-between align-items-center py-3 fs-5">
+        <div class="d-flex align-items-center">
+          <img src="{% static 'icons/first_win_badge.png' %}" width="48" class="me-3" alt="First Win Badge">
+          <strong>First Win Achieved</strong>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#badgeModalFirstWin">
+          View
+        </button>
       </li>
       {% endif %}
+
       {% if user_badges.triple_habit_badge %}
-      <li class="list-group-item d-flex align-items-center py-3 fs-5">
-        <img src="{% static 'icons/triple_habit_badge.png' %}" alt="Triple Habit Badge" width="48" class="me-3">
-        <strong>Triple Habit Achieved</strong>
+      <li class="list-group-item d-flex justify-content-between align-items-center py-3 fs-5">
+        <div class="d-flex align-items-center">
+          <img src="{% static 'icons/triple_habit_badge.png' %}" width="48" class="me-3" alt="Triple Badge">
+          <strong>Triple Habit Achieved</strong>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#badgeModalTriple">
+          View
+        </button>
       </li>
       {% endif %}
+
       {% if not user_badges.login_streak_badge and not user_badges.consistency_badge and not user_badges.first_win_badge and not user_badges.triple_habit_badge %}
-      <li class="list-group-item py-3 fs-5">No achievements earned yet.</li>
+      <li class="list-group-item py-3 fs-5 text-center text-muted">
+        No achievements earned yet.
+      </li>
       {% endif %}
     </ul>
   </div>
 </div>
+
+
+<div class="modal fade achievement-modal" id="badgeModalLogin" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center px-4 py-4">
+        <img src="{% static 'icons/login_badge.png' %}" class="badge-icon mb-3" alt="Login Streak Badge">
+        <h4 class="fw-bold text-success">Login Streak Achieved</h4>
+        <p class="badge-description">You’ve logged in at least 10 times! Great job keeping the streak alive.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade achievement-modal" id="badgeModalConsistency" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center px-4 py-4">
+        <img src="{% static 'icons/consistency_badge.png' %}" class="badge-icon mb-3" alt="Consistency Badge">
+        <h4 class="fw-bold text-primary">Consistency Achieved</h4>
+        <p class="badge-description">You’ve logged habit data on 20+ unique days. Solid discipline!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade achievement-modal" id="badgeModalFirstWin" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center px-4 py-4">
+        <img src="{% static 'icons/first_win_badge.png' %}" class="badge-icon mb-3" alt="First Win Badge">
+        <h4 class="fw-bold text-warning">First Win Achieved</h4>
+        <p class="badge-description">You've completed your first habit. The journey has officially begun!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade achievement-modal" id="badgeModalTriple" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body text-center px-4 py-4">
+        <img src="{% static 'icons/triple_habit_badge.png' %}" class="badge-icon mb-3" alt="Triple Badge">
+        <h4 class="fw-bold text-danger">Triple Habit Achieved</h4>
+        <p class="badge-description">You’ve completed 3 preset habits. That’s next-level dedication!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JS Function to Open Modals -->
+<script>
+  function openBadgeModal(modalId) {
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+  }
+</script>
+
+<!-- Modal Styles (Dark Mode + Sharing Friendly) -->
+<style>
+  .achievement-modal .modal-content {
+    background-color: #ffffff;
+    color: #000000;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .achievement-modal .badge-icon {
+    width: 100px;
+    height: auto;
+  }
+
+  .achievement-modal h4 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .achievement-modal .badge-description {
+    font-size: 1rem;
+    color: #6c757d;
+  }
+
+  @media (min-width: 768px) {
+    .modal-dialog-centered {
+      max-width: 420px;
+    }
+  }
+
+  /* Dark theme overrides */
+  [data-theme="dark"] .achievement-modal .modal-content {
+    background-color: #1e1e1e;
+    color: #ffffff;
+  }
+
+  [data-theme="dark"] .achievement-modal h4 {
+    color: #ffffff;
+  }
+
+  [data-theme="dark"] .achievement-modal .badge-description {
+    color: #cccccc;
+  }
+</style>
