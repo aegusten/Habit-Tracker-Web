@@ -310,6 +310,64 @@ document.addEventListener("DOMContentLoaded",function(){
       });
     };
   }
+  if (fpUpdatePwBtn) {
+    fpUpdatePwBtn.onclick = function() {
+      fpError3.textContent = "";
+      const pw1 = document.getElementById("fpNewPw1").value.trim();
+      const pw2 = document.getElementById("fpNewPw2").value.trim();
+      const idNum = fpIdNumber.value.trim();
+  
+      if (!pw1 || !pw2) {
+        fpError3.textContent = "Please enter and confirm your new password.";
+        return;
+      }
+      if (pw1 !== pw2) {
+        fpError3.textContent = "Passwords do not match.";
+        return;
+      }
+  
+      const payload = {
+        id_number: idNum,
+        verify: true,
+        new_password1: pw1,
+        new_password2: pw2
+      };
+  
+      fetch("{% url 'accounts:public_forgot_password_view' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": "{{ csrf_token }}",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) {
+          alert("Password updated successfully!");
+          location.reload();
+        } else {
+          if (data.errors) {
+            // Show Django form errors
+            const errObj = data.errors;
+            if (errObj.new_password1) {
+              fpError3.textContent = errObj.new_password1.join(", ");
+            } else if (errObj.new_password2) {
+              fpError3.textContent = errObj.new_password2.join(", ");
+            } else {
+              fpError3.textContent = "Error updating password.";
+            }
+          } else {
+            fpError3.textContent = "Error updating password.";
+          }
+        }
+      })
+      .catch(() => {
+        fpError3.textContent = "Server error. Please try again.";
+      });
+    };
+  }
+  
   if(fpBack2){
     fpBack2.onclick=function(){
       fpStep3.classList.add("d-none");
