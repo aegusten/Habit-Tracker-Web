@@ -75,32 +75,29 @@ def logout_view(request):
 
 def register_view(request):
     if request.method == 'POST':
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-
+        register_form = RegisterForm(request.POST)
+        if register_form.is_valid():
+            user = register_form.save()
             q_obj1 = get_object_or_404(SecurityQuestion, question_text="Security Question 1")
-            chosen_q1 = form.cleaned_data['question1_subquestion'] 
-            ans1 = form.cleaned_data['answer1']
+            chosen_q1 = register_form.cleaned_data['question1_subquestion']
+            ans1 = register_form.cleaned_data['answer1']
             UserSecurityAnswer.objects.create(
                 user=user,
                 question=q_obj1,
                 question_text=chosen_q1,
                 answer=ans1
             )
-            
             q_obj2 = get_object_or_404(SecurityQuestion, question_text="Security Question 2")
-            chosen_q2 = form.cleaned_data['question2_subquestion']
-            ans2 = form.cleaned_data['answer2']
+            chosen_q2 = register_form.cleaned_data['question2_subquestion']
+            ans2 = register_form.cleaned_data['answer2']
             UserSecurityAnswer.objects.create(
                 user=user,
                 question=q_obj2,
                 question_text=chosen_q2,
                 answer=ans2
             )
-            
-            chosen_q3 = form.cleaned_data.get('question3_subquestion')
-            ans3 = form.cleaned_data.get('answer3')
+            chosen_q3 = register_form.cleaned_data.get('question3_subquestion')
+            ans3 = register_form.cleaned_data.get('answer3')
             if chosen_q3 and ans3:
                 q_obj3 = get_object_or_404(SecurityQuestion, question_text="Security Question 3")
                 UserSecurityAnswer.objects.create(
@@ -109,12 +106,15 @@ def register_view(request):
                     question_text=chosen_q3,
                     answer=ans3
                 )
-            
             login(request, user)
             return redirect('accounts:main_menu')
     else:
-        form = RegisterForm()
-    return render(request, 'login.html', {'form': form})
+        register_form = RegisterForm()
+    login_form = LoginForm()
+    return render(request, 'login.html', {
+        'form': login_form,
+        'register_form': register_form
+    })
 
 def login_view(request):
     if request.method == 'POST':
@@ -165,37 +165,23 @@ def public_forgot_password_view(request):
 def public_verify_security_answers(request):
     try:
         data = json.loads(request.body)
-        logger.debug("Received data: %s", data)
-
-        # Normalize keys to strings
         data = {str(k): v for k, v in data.items()}
-
         id_number = data.get('id_number', '').strip()
         user = User.objects.filter(id_number=id_number).first()
-
         if not user:
             logger.warning("User not found for id_number: %s", id_number)
             return JsonResponse({'valid': False, 'error': 'User not found'}, status=404)
-
         user_answers = UserSecurityAnswer.objects.filter(user=user)
         correct = 0
-
         for ua in user_answers:
             question_id = str(ua.question.id)
             provided_answer = data.get(question_id, '').strip().lower()
             stored_answer = ua.answer.strip().lower()
-
-            logger.debug(f"Comparing answers for question {question_id}: user='{provided_answer}' vs stored='{stored_answer}'")
-
             if provided_answer == stored_answer:
                 correct += 1
-
         valid = correct >= 2
-        logger.info(f"Security answers valid: {valid} ({correct} correct)")
-
         return JsonResponse({'valid': valid})
-
-    except Exception as e:
+    except Exception:
         logger.exception("Error verifying security answers")
         return JsonResponse({'valid': False, 'error': 'Server error'}, status=500)
 
@@ -204,7 +190,6 @@ def public_verify_security_answers(request):
 def change_password_view(request):
     user = request.user
     data = json.loads(request.body)
-
     if data.get('verify'):
         form = SetPasswordForm(user, data)
         if form.is_valid():
@@ -212,19 +197,11 @@ def change_password_view(request):
             update_session_auth_hash(request, user)
             return JsonResponse({"ok": True})
         return JsonResponse({"ok": False, "errors": form.errors}, status=400)
-
-    if (
-        'old_password' in data
-        and data.get('new_password1') == ""
-        and data.get('new_password2') == ""
-    ):
+    if 'old_password' in data and data.get('new_password1') == "" and data.get('new_password2') == "":
         old_password = data["old_password"].strip()
-        print("DEBUG old_password:", repr(old_password))
-        print("DEBUG check_password =>", user.check_password(old_password))
         if not user.check_password(old_password):
             return JsonResponse({"ok": False, "errors": {"old_password": ["Incorrect password."]}}, status=400)
         return JsonResponse({"ok": True})
-
     if 'old_password' in data and data.get('old_password'):
         form = PasswordChangeForm(user, data)
         if form.is_valid():
@@ -232,7 +209,6 @@ def change_password_view(request):
             update_session_auth_hash(request, user)
             return JsonResponse({"ok": True})
         return JsonResponse({"ok": False, "errors": form.errors}, status=400)
-
     return JsonResponse({"error": "Invalid request"}, status=400)
 
 @login_required
